@@ -14,4 +14,6 @@ class Colors:
         DARK_BLUE = getcolor("#003366")
         WHITE = getcolor("#FFFFFF")
         PINK = getcolor("#FFC0CB")
+        RED = getcolor("#FF0000")
+        GREEN = getcolor("#00FF00")
         # Thêm bất kỳ màu sắc nào khác bạn cần
