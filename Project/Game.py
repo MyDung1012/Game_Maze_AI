@@ -3,6 +3,8 @@ import random
 import sys
 from Colors import Colors
 from enum import Enum
+import json
+import os
 
 # Khởi tạo Pygame
 pygame.init()
@@ -17,40 +19,20 @@ maze_width = screen_width * 2 // 3  # Mê cung chiếm 2/3 màn hình bên trái
 pygame.mixer.music.load('Sound/8bit.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play()
-maze_matrix = [
-    [1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,0,0,1,1,0,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,1,1,0,1,1,1,0,0,1,1,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,1,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,1,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1],
-    [1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1],
-    [1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,1],
-    [1,0,0,1,1,0,0,0,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1,1,0,0,0,0,1,1],
-    [1,0,0,1,1,0,0,0,0,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,1,1,0,1,1,1,1,1,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,1,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,1,0,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,0,1,1,1,1,1],
-    [1,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,0,1,1,1,1,1],
-    [1,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-]
+try:
+    with open('difficulty.txt', 'r') as f:
+        maze_size = int(f.read().strip())
+except (FileNotFoundError, ValueError) as e:
+    print(f"Error reading difficulty: {e}")
+    maze_size = 10  # Default size
 
+# Load maze matrix
+try:
+    with open(f"maze/{maze_size}.txt", "r") as f:
+        maze_matrix = json.load(f)
+except (FileNotFoundError, SyntaxError) as e:
+    print(f"Error loading maze file: {e}")
+    sys.exit()
 # Kích thước của từng ô trong mê cung
 cell_width = maze_width // len(maze_matrix[0])  # Tính kích thước ô dựa trên chiều rộng mê cung
 cell_height = screen_height // len(maze_matrix)
@@ -168,7 +150,7 @@ class Player:
         self.game_completed = False  # Reset trạng thái game khi restart
     
     def is_at_goal(self):
-        return self.row == 29 and self.col == 29  # Kiểm tra vị trí đích
+        return self.row == maze_size - 1 and self.col == maze_size - 1   # Kiểm tra vị trí đích
 
     def move(self, direction, maze_matrix):
         # Nếu game đã hoàn thành, không cho phép di chuyển
@@ -234,6 +216,11 @@ while True:
                 pygame.quit()
                 sys.exit()
 
+            elif event.key == pygame.K_b:  # Nhấn B để quay lại home.py
+                pygame.mixer.music.stop()
+                exec(open("Home.py", encoding="utf-8").read())
+
+
     screen.blit(background_image, (0, 0))
 
     for planet in planets:
@@ -253,8 +240,9 @@ while True:
 
 
     # Vẽ điểm đích
-    goal_x = 29 * cell_width + cell_width // 2
-    goal_y = 29 * cell_height + cell_height // 2
+    goal_x = (maze_size - 1) * cell_width + cell_width // 2
+    goal_y = (maze_size - 1) * cell_height + cell_height // 2
+
     pygame.draw.circle(screen, Colors.GREEN, (goal_x, goal_y), min(cell_width, cell_height) // 2)
     
     # Hiển thị thông báo hoàn thành
@@ -286,9 +274,3 @@ while True:
     pygame.display.flip()
     pygame.time.delay(30)
 
-def main():
-    # Your game initialization and main loop here
-    pass
-
-if __name__ == "__main__":
-    main()
