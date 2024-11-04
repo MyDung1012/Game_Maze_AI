@@ -216,7 +216,7 @@ while True:
                 pygame.quit()
                 sys.exit()
 
-            elif event.key == pygame.K_b:  # Nhấn B để quay lại home.py
+            elif event.key == pygame.K_h:  # Nhấn B để quay lại home.py
                 pygame.mixer.music.stop()
                 exec(open("Home.py", encoding="utf-8").read())
 
@@ -269,6 +269,11 @@ while True:
     instructions_exit_rect = instructions_exit.get_rect()
     instructions_exit_rect.topleft = (screen_width - 170, 300)
     screen.blit(instructions_exit, instructions_exit_rect)
+
+    instructions_back = font.render("H: Home", True, Colors.WHITE)
+    instructions_back_rect = instructions_back.get_rect()
+    instructions_back_rect.topleft = (screen_width - 170, 350)
+    screen.blit(instructions_back, instructions_back_rect)
     
     # Cập nhật màn hình
     pygame.display.flip()
