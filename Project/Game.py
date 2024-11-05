@@ -264,10 +264,11 @@ while True:
                 pygame.quit()
                 sys.exit()
 
-            elif event.key == pygame.K_h:  # Nhấn B để quay lại home.py
+            elif event.key == pygame.K_h:  # Nhấn H để quay lại home.py
                 pygame.mixer.music.stop()
                 exec(open("Home.py", encoding="utf-8").read())
             elif event.key == pygame.K_b:  # Nhấn B để chạy BFS
+                player.reset_position()
                 auto_move_path = solve_maze_bfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
                 auto_move_index = 0
 

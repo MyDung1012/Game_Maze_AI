@@ -319,3 +319,4 @@ while True:
     # Cập nhật màn hình
     pygame.display.flip()
     pygame.time.delay(30)
+
