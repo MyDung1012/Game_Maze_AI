@@ -157,6 +157,7 @@ buttons = [
     ("Continue", button_y_start + 4 * (button_height + button_spacing)),
     ("Exit", button_y_start + 5 * (button_height + button_spacing)),
 ]
+background_sound.play(loops=-1)  # Phát âm thanh liên tục mà không bị chồng tiếng
 
 # Vòng lặp chính
 while True:
@@ -165,7 +166,6 @@ while True:
             pygame.quit()
             sys.exit()
 
-    background_sound.play()
     # Vẽ nền không gian
     screen.blit(background_image, (0, 0))
 
