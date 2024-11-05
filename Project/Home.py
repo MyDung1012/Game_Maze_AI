@@ -92,8 +92,6 @@ while True:
             # Kiểm tra nếu click vào nút "Start"
             elif screen_width // 2 - 100 <= mouse_x <= screen_width // 2 + 100 and 350 <= mouse_y <= 410:
                 pygame.mixer.music.stop()
- # Dừng âm thanh nền
-                
                 with open('difficulty.txt', 'w') as f:
                     f.write("")
                     f.write(str(difficulty_value))

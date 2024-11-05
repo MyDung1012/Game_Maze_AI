@@ -95,29 +95,23 @@ class Maze:
             for col in range(len(self.matrix[row])):
                 x = col * cell_width
                 y = row * cell_height
-                if self.matrix[row][col] == 1:
-                    # Không vẽ gì cho ô 1 (trong suốt), chỉ vẽ viền vàng
+                if self.matrix[row][col] == 0: #sua gia tri duong di o day
+                    # Không vẽ gì cho ô 1 (tường), chỉ vẽ viền vàng
                     self.draw_borders(surface, row, col, x, y)
                 else:
                     # Vẽ đường đi bằng hình ảnh đường đi
                     surface.blit(path_image, (x, y))
 
     def draw_borders(self, surface, row, col, x, y):
-        # Kiểm tra các ô lân cận (trái, phải, trên, dưới) xem có giá trị 1 hay không
-        top = row > 0 and self.matrix[row - 1][col] == 1
-        bottom = row < len(self.matrix) - 1 and self.matrix[row + 1][col] == 1
-        left = col > 0 and self.matrix[row][col - 1] == 1
-        right = col < len(self.matrix[row]) - 1 and self.matrix[row][col + 1] == 1
-
-        # Vẽ viền xung quanh nếu ô hiện tại là 1
-        if not top:
-            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x + cell_width, y), 2)  # Viền trên
-        if not bottom:
-            pygame.draw.line(surface, Colors.YELLOW, (x, y + cell_height), (x + cell_width, y + cell_height), 2)  # Viền dưới
-        if not left:
-            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x, y + cell_height), 2)  # Viền trái
-        if not right:
-            pygame.draw.line(surface, Colors.YELLOW, (x + cell_width, y), (x + cell_width, y + cell_height), 2)  # Viền phải
+        # Vẽ viền xung quanh nếu ô hiện tại là ô ngoài cùng
+        if row == 0:  # Viền trên cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x + cell_width, y), 2)
+        if row == maze_size - 1:  # Viền dưới cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x, y + cell_height), (x + cell_width, y + cell_height), 2)
+        if col == 0:  # Viền trái cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x, y + cell_height), 2)
+        if col == maze_size - 1:  # Viền phải cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x + cell_width, y), (x + cell_width, y + cell_height), 2)
 
 
 # Tạo danh sách hành tinh
@@ -147,7 +141,6 @@ class Player:
     def reset_position(self):
         self.row = 0
         self.col = 0
-        self.steps = 0
         self.game_completed = False  # Reset trạng thái game khi restart
     
     def is_at_goal(self):
@@ -166,10 +159,10 @@ class Player:
         
         if (0 <= new_row < len(maze_matrix) and 
             0 <= new_col < len(maze_matrix[0]) and 
-            maze_matrix[new_row][new_col] == 1):
+            maze_matrix[new_row][new_col] == 0): #
             self.row = new_row
             self.col = new_col
-            self.steps += 1
+
             # Kiểm tra xem người chơi đã đến đích chưa
             if self.is_at_goal():
                 self.game_completed = True
@@ -202,9 +195,9 @@ def solve_maze_bfs(maze_matrix, start, goal):
         for direction in directions:
             new_row, new_col = row + direction.value[1], col + direction.value[0]
             
-            if (0 <= new_row < rows and 
-                0 <= new_col < cols and 
-                maze_matrix[new_row][new_col] == 1 and
+            if (0 <= new_row < rows and  #
+                0 <= new_col < cols and #
+                maze_matrix[new_row][new_col] == 0 and #
                 (new_row, new_col) not in visited):
                 
                 visited.add((new_row, new_col))
@@ -230,28 +223,28 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_KP1:
+            if event.key == pygame.K_KP1 or event.key == pygame.K_1:
                 if player.move((-1, 1), maze_matrix):  # Down-Left
                     player_step_counter += 1
-            elif event.key == pygame.K_KP2:
+            elif event.key == pygame.K_KP2 or event.key == pygame.K_2:
                 if player.move((0, 1), maze_matrix):   # Down
                     player_step_counter += 1
-            elif event.key == pygame.K_KP3:
+            elif event.key == pygame.K_KP3or event.key == pygame.K_3:
                 if player.move((1, 1), maze_matrix):   # Down-Right
                     player_step_counter += 1
-            elif event.key == pygame.K_KP4:
+            elif event.key == pygame.K_KP4 or event.key == pygame.K_4:
                 if player.move((-1, 0), maze_matrix):  # Left
                     player_step_counter += 1
-            elif event.key == pygame.K_KP6:
+            elif event.key == pygame.K_KP6 or event.key == pygame.K_6:
                 if player.move((1, 0), maze_matrix):   # Right
                     player_step_counter += 1
-            elif event.key == pygame.K_KP7:
+            elif event.key == pygame.K_KP7 or event.key == pygame.K_7:
                 if player.move((-1, -1), maze_matrix): # Up-Left
                     player_step_counter += 1
-            elif event.key == pygame.K_KP8:
+            elif event.key == pygame.K_KP8 or event.key == pygame.K_8:
                 if player.move((0, -1), maze_matrix):  # Up
                     player_step_counter += 1
-            elif event.key == pygame.K_KP9:
+            elif event.key == pygame.K_KP9 or event.key == pygame.K_9:
                 if player.move((1, -1), maze_matrix):  # Up-Right
                     player_step_counter += 1
             elif event.key == pygame.K_r:  # Nhấn R để restart
@@ -263,7 +256,6 @@ while True:
             elif event.key == pygame.K_ESCAPE:  # Nhấn ESC để thoát
                 pygame.quit()
                 sys.exit()
-
             elif event.key == pygame.K_h:  # Nhấn H để quay lại home.py
                 pygame.mixer.music.stop()
                 exec(open("Home.py", encoding="utf-8").read())
