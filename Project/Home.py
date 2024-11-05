@@ -13,14 +13,17 @@ screen_width, screen_height = info.current_w, info.current_h
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
 pygame.display.set_caption("Maze Game Home")
 
-# Load sound
-background_sound = pygame.mixer.Sound('Sound/chillmusic.mp3')
+
+pygame.mixer.music.load('Sound/chillmusic.mp3')
+pygame.mixer.music.set_volume(0.3)
+pygame.mixer.music.play()
 
 # Load slider images
 slider_image = pygame.image.load('Image/Slider.png')
 slider_image = pygame.transform.scale(slider_image, (280, 30))
 button_image = pygame.image.load('Image/Dragger.png')
 button_image = pygame.transform.scale(button_image, (30, 50))
+
 
 # Load difficulty level images (for levels 1 to 10)
 difficulty_images = [pygame.image.load(f'Image/Level{i}.png') for i in range(1, 2)]
@@ -76,23 +79,34 @@ def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, c
     surface.blit(slider_image, (x, y))
     slider_x = x + int((current_value - min_value) / (max_value - min_value) * width)
     surface.blit(button_image, (slider_x - 10, y - 10))
-    # Display the image corresponding to the difficulty level
-    image = difficulty_images[current_value - 1]
-    surface.blit(image, (x + width + 20, y - 100))  # Adjust position as needed
+
+    # Kiểm tra xem current_value có hợp lệ không
+    if 1 <= current_value <= len(difficulty_images):
+        image = difficulty_images[current_value - 1]
+        surface.blit(image, (x + width + 20, y - 100))
+    else:
+        # Nếu không, có thể vẽ một hình ảnh mặc định hoặc không làm gì cả
+        print("Current value is out of range for difficulty images.")
+    
+    font = pygame.font.SysFont("timesnewroman", 24, bold=True)
+    value_text = font.render(f"{current_value}", True, Colors.YELLOW)
+    surface.blit(value_text, (x + width + 20, y + (height // 2) - (value_text.get_height() // 2)))
+
+
 
 # Set custom font
 custom_font = pygame.font.Font("Front/UTM-Birds-Paradise.ttf", 20)
-difficulty_value = 10  # Giá trị ban đầu của thanh trượt là 10
+#difficulty_value = 10  # Giá trị ban đầu của thanh trượt là 10
 
 
 # Main variables
 stars = create_stars(100)  # Generate 100 stars
-difficulty_value = 1  # Initial difficulty level
+difficulty_value = 10  # Initial difficulty level
 
 # Main game loop
 
 # Hàm vẽ thanh trượt độ khó
-def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, current_value):
+"""def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, current_value):
     pygame.draw.rect(surface, Colors.YELLOW, (x, y, width, height))
     slider_x = x + int((current_value - min_value) / (max_value - min_value) * width)
     pygame.draw.rect(surface, Colors.WHITE, (slider_x - 10, y - 5, 20, height + 10))
@@ -101,7 +115,7 @@ def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, c
     font = pygame.font.SysFont("timesnewroman", 24, bold=True)
     value_text = font.render(f"{current_value}", True, Colors.YELLOW)
     surface.blit(value_text, (x + width + 20, y + (height // 2) - (value_text.get_height() // 2)))  # Xuất hiện bên phải thanh trượt
-
+"""
 stars = create_stars(100)
 
 # Vòng lặp chính
@@ -124,7 +138,12 @@ while True:
 
             # Kiểm tra nếu click vào nút "Start"
             elif screen_width // 2 - 100 <= mouse_x <= screen_width // 2 + 100 and 350 <= mouse_y <= 410:
-                pygame.mixer.Sound.stop(background_sound)  # Dừng âm thanh nền
+                pygame.mixer.music.stop()
+ # Dừng âm thanh nền
+                
+                with open('difficulty.txt', 'w') as f:
+                    f.write("")
+                    f.write(str(difficulty_value))
                 exec(open("Game.py", encoding="utf-8").read())
 
             # Kiểm tra nếu click vào nút "Exit"
@@ -133,8 +152,9 @@ while True:
                 sys.exit()
 
 
+
     draw_background()  # Draw background with stars
-    background_sound.play()
+   # background_sound.play()
 
     draw_colored_text(screen, "AI MAZE GAME", (screen_width // 2, 0))
 

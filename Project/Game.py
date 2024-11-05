@@ -3,6 +3,9 @@ import random
 import sys
 from Colors import Colors
 from enum import Enum
+import json
+from collections import deque  # Thêm deque cho BFS
+
 
 # Khởi tạo Pygame
 pygame.init()
@@ -17,40 +20,20 @@ maze_width = screen_width * 2 // 3  # Mê cung chiếm 2/3 màn hình bên trái
 pygame.mixer.music.load('Sound/8bit.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play()
-maze_matrix = [
-    [1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,0,0,1,1,0,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,1,1,0,1,1,1,0,0,1,1,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,1,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,1,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1],
-    [1,0,1,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1],
-    [1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1,1,1],
-    [1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,1],
-    [1,0,0,1,1,0,0,0,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1,1,0,0,0,0,1,1],
-    [1,0,0,1,1,0,0,0,0,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,1,1,0,0,1,1],
-    [1,0,0,1,1,0,1,1,1,1,1,0,0,0,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1],
-    [1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,1,0,0,1,1,1,1,1,1,1,1,1,0,0,1,1,0,0,0,1,1,0,1],
-    [1,0,0,1,1,0,0,1,0,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,0,1,1,1,1,1],
-    [1,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,0,1,1,1,1,1],
-    [1,0,0,1,1,1,1,1,0,0,1,1,0,0,1,1,0,0,1,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,1,1,1],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-]
+try:
+    with open('difficulty.txt', 'r') as f:
+        maze_size = int(f.read().strip())
+except (FileNotFoundError, ValueError) as e:
+    print(f"Error reading difficulty: {e}")
+    maze_size = 10  # Default size
 
+# Load maze matrix
+try:
+    with open(f"maze/{maze_size}.txt", "r") as f:
+        maze_matrix = json.load(f)
+except (FileNotFoundError, SyntaxError) as e:
+    print(f"Error loading maze file: {e}")
+    sys.exit()
 # Kích thước của từng ô trong mê cung
 cell_width = maze_width // len(maze_matrix[0])  # Tính kích thước ô dựa trên chiều rộng mê cung
 cell_height = screen_height // len(maze_matrix)
@@ -143,21 +126,6 @@ planets = [Planet(planet_images[i], random.randint(0, screen_width), random.rand
 # Khởi tạo mê cung
 maze = Maze(maze_matrix)
 
-\
-# Kích thước và vị trí của các nút
-button_width, button_height = 120, 40
-button_y_start = screen_height - button_height - 20  # Vị trí y cho nút
-button_spacing = 10  # Khoảng cách giữa các nút
-buttons = [
-    ("Thuật toán", button_y_start),
-    ("Thuật toán", button_y_start + button_height + button_spacing),
-    ("Restart", button_y_start + 2 * (button_height + button_spacing)),
-    ("Stop", button_y_start + 3 * (button_height + button_spacing)),
-    ("Continue", button_y_start + 4 * (button_height + button_spacing)),
-    ("Exit", button_y_start + 5 * (button_height + button_spacing)),
-]
-#background_sound.play(loops=-1)  # Phát âm thanh liên tục mà không bị chồng tiếng
-
 
 
 # Lớp Player
@@ -183,7 +151,7 @@ class Player:
         self.game_completed = False  # Reset trạng thái game khi restart
     
     def is_at_goal(self):
-        return self.row == 29 and self.col == 29  # Kiểm tra vị trí đích
+        return self.row == maze_size - 1 and self.col == maze_size - 1   # Kiểm tra vị trí đích
 
     def move(self, direction, maze_matrix):
         # Nếu game đã hoàn thành, không cho phép di chuyển
@@ -219,7 +187,41 @@ class Player:
 
 # Add after maze initialization
 player = Player(0, 0)  # Changed from Player(1, 1)
+def solve_maze_bfs(maze_matrix, start, goal):
+    rows, cols = len(maze_matrix), len(maze_matrix[0])
+    queue = deque([(start[0], start[1], [])])  # Hàng đợi BFS lưu tọa độ và đường đi hiện tại
+    visited = set()  # Tập hợp các vị trí đã ghé qua
+    directions = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
 
+    while queue:
+        row, col, path = queue.popleft()
+        
+        if (row, col) == goal:
+            return path  # Trả về đường đi đã tìm được đến đích
+
+        for direction in directions:
+            new_row, new_col = row + direction.value[1], col + direction.value[0]
+            
+            if (0 <= new_row < rows and 
+                0 <= new_col < cols and 
+                maze_matrix[new_row][new_col] == 1 and
+                (new_row, new_col) not in visited):
+                
+                visited.add((new_row, new_col))
+                queue.append((new_row, new_col, path + [direction.value]))  # Thêm bước di chuyển vào đường đi
+
+    return None  # Trả về None nếu không tìm thấy đường đi
+
+# Initialize auto_move_path, auto_move_index, and AI_step
+auto_move_path = None
+auto_move_index = 0
+AI_step = 0  # Initialize AI_step to count DFS steps
+
+# Initialize font
+font = pygame.font.Font(None, 36)  # Add this line to initialize the font
+
+# Initialize player_step_counter
+player_step_counter = 0  # Separate counter for player's manual steps
 
 # Vòng lặp chính
 while True:
@@ -229,27 +231,51 @@ while True:
             sys.exit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_KP1:
-                player.move((-1, 1), maze_matrix)  # Down-Left
+                if player.move((-1, 1), maze_matrix):  # Down-Left
+                    player_step_counter += 1
             elif event.key == pygame.K_KP2:
-                player.move((0, 1), maze_matrix)   # Down
+                if player.move((0, 1), maze_matrix):   # Down
+                    player_step_counter += 1
             elif event.key == pygame.K_KP3:
-                player.move((1, 1), maze_matrix)   # Down-Right
+                if player.move((1, 1), maze_matrix):   # Down-Right
+                    player_step_counter += 1
             elif event.key == pygame.K_KP4:
-                player.move((-1, 0), maze_matrix)  # Left
+                if player.move((-1, 0), maze_matrix):  # Left
+                    player_step_counter += 1
             elif event.key == pygame.K_KP6:
-                player.move((1, 0), maze_matrix)   # Right
+                if player.move((1, 0), maze_matrix):   # Right
+                    player_step_counter += 1
             elif event.key == pygame.K_KP7:
-                player.move((-1, -1), maze_matrix) # Up-Left
+                if player.move((-1, -1), maze_matrix): # Up-Left
+                    player_step_counter += 1
             elif event.key == pygame.K_KP8:
-                player.move((0, -1), maze_matrix)  # Up
+                if player.move((0, -1), maze_matrix):  # Up
+                    player_step_counter += 1
             elif event.key == pygame.K_KP9:
-                player.move((1, -1), maze_matrix)  # Up-Right
+                if player.move((1, -1), maze_matrix):  # Up-Right
+                    player_step_counter += 1
             elif event.key == pygame.K_r:  # Nhấn R để restart
                 player.reset_position()
+            elif event.key == pygame.K_n:
+                player.reset_position()
+                player_step_counter = 0  # Reset player step counter
+                AI_step = 0
             elif event.key == pygame.K_ESCAPE:  # Nhấn ESC để thoát
                 pygame.quit()
                 sys.exit()
 
+            elif event.key == pygame.K_h:  # Nhấn B để quay lại home.py
+                pygame.mixer.music.stop()
+                exec(open("Home.py", encoding="utf-8").read())
+            elif event.key == pygame.K_b:  # Nhấn B để chạy BFS
+                auto_move_path = solve_maze_bfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
+                auto_move_index = 0
+
+    if auto_move_path and auto_move_index < len(auto_move_path):
+        direction = auto_move_path[auto_move_index]
+        player.move(direction, maze_matrix)
+        auto_move_index += 1  # Move to the next step
+        AI_step += 1  # Increment AI_step for each move
 
     screen.blit(background_image, (0, 0))
 
@@ -263,15 +289,18 @@ while True:
     # Draw player
     player.draw(screen)
     
-    # Draw step counter
-    font = pygame.font.SysFont("Front/04054_BeamRider3D (1).ttf", 24)
-    step_text = font.render(f"Steps: {player.steps}", True, Colors.WHITE)
-    screen.blit(step_text, (screen_width - 170, 200))
+    # Draw AI step counter
+    ai_step_text = font.render(f"AI Steps: {AI_step}", True, Colors.WHITE)
+    screen.blit(ai_step_text, (screen_width - 300, 150))  # Display above player steps
 
+    # Draw player step counter
+    step_text = font.render(f"Steps: {player_step_counter}", True, Colors.WHITE)
+    screen.blit(step_text, (screen_width - 300, 200))
 
     # Vẽ điểm đích
-    goal_x = 29 * cell_width + cell_width // 2
-    goal_y = 29 * cell_height + cell_height // 2
+    goal_x = (maze_size - 1) * cell_width + cell_width // 2
+    goal_y = (maze_size - 1) * cell_height + cell_height // 2
+
     pygame.draw.circle(screen, Colors.GREEN, (goal_x, goal_y), min(cell_width, cell_height) // 2)
     
     # Hiển thị thông báo hoàn thành
@@ -281,31 +310,43 @@ while True:
     if player.is_at_goal():
         game_completed = True
     
-    if game_completed:
-        instructions_win = font.render("Congratulations", True, Colors.WHITE)
-        instructions_win_rect = instructions_win.get_rect()
-        instructions_win_rect.topleft = (screen_width - 170, 450)
-        screen.blit(instructions_win, instructions_win_rect)
+
 
         
     # Hiển thị hướng dẫn
     instructions_restart = font.render("R: Restart", True, Colors.WHITE)
     instructions_restart_rect = instructions_restart.get_rect()
-    instructions_restart_rect.topleft = (screen_width - 170, 250)
+    instructions_restart_rect.topleft = (screen_width - 300, 250)
     screen.blit(instructions_restart, instructions_restart_rect)
 
     instructions_exit = font.render("ESC: Exit", True, Colors.WHITE)
     instructions_exit_rect = instructions_exit.get_rect()
-    instructions_exit_rect.topleft = (screen_width - 170, 300)
+    instructions_exit_rect.topleft = (screen_width - 300, 300)
     screen.blit(instructions_exit, instructions_exit_rect)
-    
+
+    instructions_back = font.render("H: Home", True, Colors.WHITE)
+    instructions_back_rect = instructions_back.get_rect()
+    instructions_back_rect.topleft = (screen_width - 300, 350)
+    screen.blit(instructions_back, instructions_back_rect)
+
+    instructions_new = font.render("N: New", True, Colors.WHITE)
+    instructions_new_rect = instructions_new.get_rect()
+    instructions_new_rect.topleft = (screen_width - 300, 400)
+    screen.blit(instructions_new, instructions_new_rect)
+
+
+    instructions_bfs = font.render("B: BFS", True, Colors.WHITE)
+    instructions_bfs_rect = instructions_bfs.get_rect()
+    instructions_bfs_rect.topleft = (screen_width - 300, 450)
+    screen.blit(instructions_bfs, instructions_bfs_rect)
+
+
+
+    if game_completed:
+        instructions_win = font.render("DONE!!!", True, Colors.WHITE)
+        instructions_win_rect = instructions_win.get_rect()
+        instructions_win_rect.topleft = (screen_width - 300, 100)
+        screen.blit(instructions_win, instructions_win_rect)
     # Cập nhật màn hình
     pygame.display.flip()
     pygame.time.delay(30)
-
-def main():
-    # Your game initialization and main loop here
-    pass
-
-if __name__ == "__main__":
-    main()
