@@ -25,9 +25,7 @@ try:
         maze_size = int(f.read().strip())
 except (FileNotFoundError, ValueError) as e:
     print(f"Error reading difficulty: {e}")
-
-    maze_size = 10  # Default size
-
+    maze_size = 30  # Default size
 
 # Load maze matrix
 try:
