@@ -5,6 +5,7 @@ def getcolor(hexcode):
     return ImageColor.getcolor(hexcode, "RGB")
 
 class Colors:
+
     # Các màu sắc được chuyển đổi từ mã hex sang RGB
     BLACK = getcolor("#000000")
     YELLOW = getcolor("#FFFF00")
@@ -17,3 +18,4 @@ class Colors:
     RED = getcolor("#FF0000")
     GREEN = getcolor("#00FF00")
     GREY = getcolor("#808080")
+
