@@ -13,8 +13,9 @@ screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREE
 pygame.display.set_caption("Maze Game Home")
 
 # Âm thanh
-background_sound = pygame.mixer.Sound('Sound/chillmusic.mp3')
-
+pygame.mixer.music.load('Sound/chillmusic.mp3')
+pygame.mixer.music.set_volume(0.3)
+pygame.mixer.music.play()
 # Tạo màu nền hồng
 def draw_background():
     screen.fill((0, 0, 0))
@@ -90,7 +91,12 @@ while True:
 
             # Kiểm tra nếu click vào nút "Start"
             elif screen_width // 2 - 100 <= mouse_x <= screen_width // 2 + 100 and 350 <= mouse_y <= 410:
-                pygame.mixer.Sound.stop(background_sound)  # Dừng âm thanh nền
+                pygame.mixer.music.stop()
+ # Dừng âm thanh nền
+                
+                with open('difficulty.txt', 'w') as f:
+                    f.write("")
+                    f.write(str(difficulty_value))
                 exec(open("Game.py", encoding="utf-8").read())
 
             # Kiểm tra nếu click vào nút "Exit"
@@ -100,7 +106,6 @@ while True:
 
     draw_background()
 
-    background_sound.play()
     draw_colored_text(screen, "AI MAZE GAME", (screen_width // 2, 0))
 
     custom_text = custom_font.render("MADE BY DUNG - DUONG - TRAN", True, Colors.PINK)
