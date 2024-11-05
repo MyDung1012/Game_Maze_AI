@@ -147,12 +147,17 @@ while True:
             # Kiểm tra nếu click vào nút "Start"
             elif screen_width // 2 - 100 <= mouse_x <= screen_width // 2 + 100 and 350 <= mouse_y <= 410:
                 pygame.mixer.music.stop()
-   
+ # Dừng âm thanh nền
+                
+                #difficulty_filename = f"maze/{difficulty_value}.txt"  # Đường dẫn đến file tương ứng
 
+    # Ghi giá trị độ khó vào file
                 with open('difficulty.txt', 'w') as f:
                     f.write("")
                     f.write(str(difficulty_value))
                 exec(open("Game.py", encoding="utf-8").read())
+
+
             # Kiểm tra nếu click vào nút "Exit"
             elif screen_width - 220 <= mouse_x <= screen_width - 20 and screen_height - 80 <= mouse_y <= screen_height - 20:
                 pygame.quit()

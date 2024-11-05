@@ -27,6 +27,7 @@ except (FileNotFoundError, ValueError) as e:
     print(f"Error reading difficulty: {e}")
     maze_size = 10  # Default size
 
+
 # Load maze matrix
 try:
     with open(f"maze/{maze_size}.txt", "r") as f:
@@ -229,7 +230,7 @@ while True:
             elif event.key == pygame.K_KP2 or event.key == pygame.K_2:
                 if player.move((0, 1), maze_matrix):   # Down
                     player_step_counter += 1
-            elif event.key == pygame.K_KP3or event.key == pygame.K_3:
+            elif event.key == pygame.K_KP3 or event.key == pygame.K_3:
                 if player.move((1, 1), maze_matrix):   # Down-Right
                     player_step_counter += 1
             elif event.key == pygame.K_KP4 or event.key == pygame.K_4:
