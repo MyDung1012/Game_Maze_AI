@@ -180,7 +180,6 @@ while True:
     # Thêm BY DUNG-DUONG-TRAN
     additional_image = pygame.image.load('Image/by DDT.png')  # Thay đổi đường dẫn tới ảnh của bạn
     additional_image = pygame.transform.scale(additional_image, (600, 50))  # Thay đổi kích thước ảnh theo ý muốn
-
     # Đặt vị trí của ảnh dưới logo
     additional_x = (screen_width - additional_image.get_width()) // 2
     additional_y = logo_y + logo_image.get_height() + 5  # Đặt ảnh dưới logo với khoảng cách 20 pixel
