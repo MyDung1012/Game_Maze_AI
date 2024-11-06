@@ -77,7 +77,7 @@ def draw_colored_text(surface, text, center):
 # Draw rounded button
 def draw_rounded_button(surface, text, x, y, width, height, color, font_size):
     pygame.draw.rect(surface, color, (x, y, width, height), border_radius=15)
-    font = pygame.font.Font("Front/04054_BeamRider3D (1).ttf", font_size)
+    font = pygame.font.Font("Front/Jomplang-6Y3Jo.ttf", font_size)
     label = font.render(text, True, Colors.WHITE)
     text_rect = label.get_rect(center=(x + width // 2, y + height // 2))
     surface.blit(label, text_rect)
@@ -112,19 +112,9 @@ stars = create_stars(100)  # Generate 100 stars
 difficulty_value = 10  # Initial difficulty level
 
 # Main game loop
-
-# Hàm vẽ thanh trượt độ khó
-"""def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, current_value):
-    pygame.draw.rect(surface, Colors.YELLOW, (x, y, width, height))
-    slider_x = x + int((current_value - min_value) / (max_value - min_value) * width)
-    pygame.draw.rect(surface, Colors.WHITE, (slider_x - 10, y - 5, 20, height + 10))
-    
-    # Hiển thị giá trị hiện tại của thanh trượt
-    font = pygame.font.SysFont("timesnewroman", 24, bold=True)
-    value_text = font.render(f"{current_value}", True, Colors.YELLOW)
-    surface.blit(value_text, (x + width + 20, y + (height // 2) - (value_text.get_height() // 2)))  # Xuất hiện bên phải thanh trượt
-"""
 stars = create_stars(100)
+
+
 
 # Vòng lặp chính
 
@@ -135,10 +125,6 @@ while True:
             sys.exit()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
-
-            #if screen_width // 2 - 140 <= mouse_x <= screen_width // 2 + 140 and 280 <= mouse_y <= 310:
-             #   difficulty_value = int((mouse_x - (screen_width // 2 - 140)) / 280 * 10) + 1
-
 
             # Kiểm tra nếu click vào thanh trượt
             if screen_width // 2 - 140 <= mouse_x <= screen_width // 2 + 140 and 280 <= mouse_y <= 310:
