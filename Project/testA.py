@@ -4,8 +4,8 @@ import sys
 from Colors import Colors
 from enum import Enum
 import json
-from collections import deque  # For BFS
-import heapq  # Use heapq for priority queue
+from collections import deque  # Thêm deque cho BFS
+
 
 # Khởi tạo Pygame
 pygame.init()
@@ -26,7 +26,6 @@ try:
 except (FileNotFoundError, ValueError) as e:
     print(f"Error reading difficulty: {e}")
     maze_size = 10  # Default size
-
 
 # Load maze matrix
 try:
@@ -96,23 +95,29 @@ class Maze:
             for col in range(len(self.matrix[row])):
                 x = col * cell_width
                 y = row * cell_height
-                if self.matrix[row][col] == 0: #sua gia tri duong di o day
-                    # Không vẽ gì cho ô 1 (tường), chỉ vẽ viền vàng
+                if self.matrix[row][col] == 1:
+                    # Không vẽ gì cho ô 1 (trong suốt), chỉ vẽ viền vàng
                     self.draw_borders(surface, row, col, x, y)
                 else:
                     # Vẽ đường đi bằng hình ảnh đường đi
                     surface.blit(path_image, (x, y))
 
     def draw_borders(self, surface, row, col, x, y):
-        # Vẽ viền xung quanh nếu ô hiện tại là ô ngoài cùng
-        if row == 0:  # Viền trên cùng
-            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x + cell_width, y), 2)
-        if row == maze_size - 1:  # Viền dưới cùng
-            pygame.draw.line(surface, Colors.YELLOW, (x, y + cell_height), (x + cell_width, y + cell_height), 2)
-        if col == 0:  # Viền trái cùng
-            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x, y + cell_height), 2)
-        if col == maze_size - 1:  # Viền phải cùng
-            pygame.draw.line(surface, Colors.YELLOW, (x + cell_width, y), (x + cell_width, y + cell_height), 2)
+        # Kiểm tra các ô lân cận (trái, phải, trên, dưới) xem có giá trị 1 hay không
+        top = row > 0 and self.matrix[row - 1][col] == 1
+        bottom = row < len(self.matrix) - 1 and self.matrix[row + 1][col] == 1
+        left = col > 0 and self.matrix[row][col - 1] == 1
+        right = col < len(self.matrix[row]) - 1 and self.matrix[row][col + 1] == 1
+
+        # Vẽ viền xung quanh nếu ô hiện tại là 1
+        if not top:
+            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x + cell_width, y), 2)  # Viền trên
+        if not bottom:
+            pygame.draw.line(surface, Colors.YELLOW, (x, y + cell_height), (x + cell_width, y + cell_height), 2)  # Viền dưới
+        if not left:
+            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x, y + cell_height), 2)  # Viền trái
+        if not right:
+            pygame.draw.line(surface, Colors.YELLOW, (x + cell_width, y), (x + cell_width, y + cell_height), 2)  # Viền phải
 
 
 # Tạo danh sách hành tinh
@@ -142,6 +147,7 @@ class Player:
     def reset_position(self):
         self.row = 0
         self.col = 0
+        self.steps = 0
         self.game_completed = False  # Reset trạng thái game khi restart
     
     def is_at_goal(self):
@@ -160,10 +166,10 @@ class Player:
         
         if (0 <= new_row < len(maze_matrix) and 
             0 <= new_col < len(maze_matrix[0]) and 
-            maze_matrix[new_row][new_col] == 0): #
+            maze_matrix[new_row][new_col] == 1):
             self.row = new_row
             self.col = new_col
-
+            self.steps += 1
             # Kiểm tra xem người chơi đã đến đích chưa
             if self.is_at_goal():
                 self.game_completed = True
@@ -196,98 +202,19 @@ def solve_maze_bfs(maze_matrix, start, goal):
         for direction in directions:
             new_row, new_col = row + direction.value[1], col + direction.value[0]
             
-            if (0 <= new_row < rows and  #
-                0 <= new_col < cols and #
-                maze_matrix[new_row][new_col] == 0 and #
+            if (0 <= new_row < rows and 
+                0 <= new_col < cols and 
+                maze_matrix[new_row][new_col] == 1 and
                 (new_row, new_col) not in visited):
                 
                 visited.add((new_row, new_col))
-                queue.append((new_row, new_col, path + [direction.value]))  # Thêm bước di chuyển vào đ��ờng đi
+                queue.append((new_row, new_col, path + [direction.value]))  # Thêm bước di chuyển vào đường đi
 
     return None  # Trả về None nếu không tìm thấy đường đi
-def solve_maze_dfs(maze_matrix, start, goal):
-    rows, cols = len(maze_matrix), len(maze_matrix[0])
-    stack = [(start[0], start[1], [])]  # Stack for DFS storing coordinates and current path
-    visited = set()  # Set to keep track of visited positions
-    directions = [Direction.UP, Direction.DOWN, Direction.LEFT, Direction.RIGHT]
 
-    while stack:
-        row, col, path = stack.pop()
-        
-        if (row, col) == goal:
-            return path  # Return the path found to the goal
-
-        if (row, col) not in visited:
-            visited.add((row, col))
-
-            for direction in directions:
-                new_row, new_col = row + direction.value[1], col + direction.value[0]
-                
-                if (0 <= new_row < rows and
-                    0 <= new_col < cols and
-                    maze_matrix[new_row][new_col] == 0 and
-                    (new_row, new_col) not in visited):
-                    
-                    stack.append((new_row, new_col, path + [direction.value]))  # Add move to path
-
-    return None  # Return None if no path is found
-def heuristic(a, b):
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
-
-def solve_maze_astar(matrix, start, goal):
-    """Thuật toán A* tìm đường đi từ start đến goal trên ma trận matrix."""
-    rows, cols = len(matrix), len(matrix[0])
-    open_set = []
-    heapq.heappush(open_set, (0, start))
-    
-    came_from = {}
-    g_score = {start: 0}
-    f_score = {start: heuristic(start, goal)}
-    
-    while open_set:
-        current_cost, current = heapq.heappop(open_set)
-        
-        if current == goal:
-            # Tạo danh sách các bước từ start đến goal dưới dạng hướng đi
-            path = []
-            while current in came_from:
-                previous, direction = came_from[current]
-                path.append(direction)
-                current = previous
-            path.reverse()
-
-            return path  # trả về danh sách các hướng di chuyển
-        DIRECTIONS = [
-            (0, -1), (0, 1), (-1, 0), (1, 0),  # lên, xuống, trái, phải
-            (-1, -1), (1, -1), (-1, 1), (1, 1)  # chéo trái trên, chéo phải trên, chéo trái dưới, chéo phải dưới
-        ]
-        for direction in DIRECTIONS:
-            neighbor = (current[0] + direction[0], current[1] + direction[1])
-            
-            # Kiểm tra nếu neighbor nằm ngoài biên hoặc là ô vật cản (giá trị 1 trong ma trận)
-            if 0 <= neighbor[0] < rows and 0 <= neighbor[1] < cols and matrix[neighbor[0]][neighbor[1]] == 0:
-                tentative_g_score = g_score[current] + 1
-                
-                if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
-                    came_from[neighbor] = (current, direction)
-                    g_score[neighbor] = tentative_g_score
-                    f_score[neighbor] = tentative_g_score + heuristic(neighbor, goal)
-                    heapq.heappush(open_set, (f_score[neighbor], neighbor))
-    
-    return None  # Không tìm thấy đường đi
-
-# Initialize auto_move_path, auto_move_index, and AI_step
+# Initialize auto_move_path and auto_move_index
 auto_move_path = None
 auto_move_index = 0
-AI_step = 0  # Initialize AI_step to count DFS steps
-auto_move_delay = 100   # Delay in milliseconds between automatic steps
-last_move_time = pygame.time.get_ticks()  # Track the last move time
-
-# Initialize font
-font = pygame.font.Font(None, 36)  # Add this line to initialize the font
-
-# Initialize player_step_counter
-player_step_counter = 0  # Separate counter for player's manual steps
 
 # Vòng lặp chính
 while True:
@@ -296,66 +223,39 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_KP1 or event.key == pygame.K_1:
-                if player.move((-1, 1), maze_matrix):  # Down-Left
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP2 or event.key == pygame.K_2:
-                if player.move((0, 1), maze_matrix):   # Down
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP3 or event.key == pygame.K_3:
-                if player.move((1, 1), maze_matrix):   # Down-Right
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP4 or event.key == pygame.K_4:
-                if player.move((-1, 0), maze_matrix):  # Left
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP6 or event.key == pygame.K_6:
-                if player.move((1, 0), maze_matrix):   # Right
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP7 or event.key == pygame.K_7:
-                if player.move((-1, -1), maze_matrix): # Up-Left
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP8 or event.key == pygame.K_8:
-                if player.move((0, -1), maze_matrix):  # Up
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP9 or event.key == pygame.K_9:
-                if player.move((1, -1), maze_matrix):  # Up-Right
-                    player_step_counter += 1
+            if event.key == pygame.K_KP1:
+                player.move((-1, 1), maze_matrix)  # Down-Left
+            elif event.key == pygame.K_KP2:
+                player.move((0, 1), maze_matrix)   # Down
+            elif event.key == pygame.K_KP3:
+                player.move((1, 1), maze_matrix)   # Down-Right
+            elif event.key == pygame.K_KP4:
+                player.move((-1, 0), maze_matrix)  # Left
+            elif event.key == pygame.K_KP6:
+                player.move((1, 0), maze_matrix)   # Right
+            elif event.key == pygame.K_KP7:
+                player.move((-1, -1), maze_matrix) # Up-Left
+            elif event.key == pygame.K_KP8:
+                player.move((0, -1), maze_matrix)  # Up
+            elif event.key == pygame.K_KP9:
+                player.move((1, -1), maze_matrix)  # Up-Right
             elif event.key == pygame.K_r:  # Nhấn R để restart
                 player.reset_position()
-            elif event.key == pygame.K_n:
-                player.reset_position()
-                player_step_counter = 0  # Reset player step counter
-                AI_step = 0
             elif event.key == pygame.K_ESCAPE:  # Nhấn ESC để thoát
                 pygame.quit()
                 sys.exit()
-            elif event.key == pygame.K_h:  # Nhấn H để quay lại home.py
+
+            elif event.key == pygame.K_h:  # Nhấn B để quay lại home.py
                 pygame.mixer.music.stop()
                 exec(open("Home.py", encoding="utf-8").read())
             elif event.key == pygame.K_b:  # Nhấn B để chạy BFS
-                player.reset_position()
                 auto_move_path = solve_maze_bfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
                 auto_move_index = 0
-                last_move_time = pygame.time.get_ticks()  # Reset move time
-            elif event.key == pygame.K_d:  # Press D to run DFS
-                player.reset_position()
-                auto_move_path = solve_maze_dfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-                last_move_time = pygame.time.get_ticks()  # Reset move time
-            elif event.key == pygame.K_a:  # Press A to run A*
-                player.reset_position()
-                auto_move_path = solve_maze_astar(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                print("Đường đi:", auto_move_path)
-                auto_move_index = 0
-                last_move_time = pygame.time.get_ticks()  # Reset move time
 
-    # Check if it's time to move to the next step
     if auto_move_path and auto_move_index < len(auto_move_path):
         direction = auto_move_path[auto_move_index]
         player.move(direction, maze_matrix)
-        auto_move_index += 1  # Move to the next step
-        AI_step += 1  # Increment AI_step for each move
-        pygame.time.delay(100)  # Delay of 0.1 seconds (100 milliseconds)
+        auto_move_index += 1  # Chuyển sang bước tiếp theo
 
     screen.blit(background_image, (0, 0))
 
@@ -369,13 +269,11 @@ while True:
     # Draw player
     player.draw(screen)
     
-    # Draw AI step counter
-    ai_step_text = font.render(f"AI Steps: {AI_step}", True, Colors.WHITE)
-    screen.blit(ai_step_text, (screen_width - 300, 150))  # Display above player steps
+    # Draw step counter
+    font = pygame.font.SysFont("Front/04054_BeamRider3D (1).ttf", 24)
+    step_text = font.render(f"Steps: {player.steps}", True, Colors.WHITE)
+    screen.blit(step_text, (screen_width - 170, 200))
 
-    # Draw player step counter
-    step_text = font.render(f"Steps: {player_step_counter}", True, Colors.WHITE)
-    screen.blit(step_text, (screen_width - 300, 200))
 
     # Vẽ điểm đích
     goal_x = (maze_size - 1) * cell_width + cell_width // 2
@@ -390,62 +288,34 @@ while True:
     if player.is_at_goal():
         game_completed = True
     
+    if game_completed:
+        instructions_win = font.render("Congratulations", True, Colors.WHITE)
+        instructions_win_rect = instructions_win.get_rect()
+        instructions_win_rect.topleft = (screen_width - 150, 450)
+        screen.blit(instructions_win, instructions_win_rect)
+
+        
     # Hiển thị hướng dẫn
+    instructions_restart = font.render("R: Restart", True, Colors.WHITE)
+    instructions_restart_rect = instructions_restart.get_rect()
+    instructions_restart_rect.topleft = (screen_width - 150, 250)
+    screen.blit(instructions_restart, instructions_restart_rect)
 
     instructions_exit = font.render("ESC: Exit", True, Colors.WHITE)
     instructions_exit_rect = instructions_exit.get_rect()
-    instructions_exit_rect.topleft = (screen_width - 300, 250)
+    instructions_exit_rect.topleft = (screen_width - 150, 300)
     screen.blit(instructions_exit, instructions_exit_rect)
 
     instructions_back = font.render("H: Home", True, Colors.WHITE)
     instructions_back_rect = instructions_back.get_rect()
-    instructions_back_rect.topleft = (screen_width - 300, 300)
+    instructions_back_rect.topleft = (screen_width - 150, 350)
     screen.blit(instructions_back, instructions_back_rect)
-
-    instructions_restart = font.render("R: Restart", True, Colors.WHITE)
-    instructions_restart_rect = instructions_restart.get_rect()
-    instructions_restart_rect.topleft = (screen_width - 300, 350)
-    screen.blit(instructions_restart, instructions_restart_rect)
-
-    instructions_new = font.render("N: New  Game", True, Colors.WHITE)
-    instructions_new_rect = instructions_new.get_rect()
-    instructions_new_rect.topleft = (screen_width - 300, 400)
-    screen.blit(instructions_new, instructions_new_rect)
-
 
     instructions_bfs = font.render("B: BFS", True, Colors.WHITE)
     instructions_bfs_rect = instructions_bfs.get_rect()
-    instructions_bfs_rect.topleft = (screen_width - 300, 450)
+    instructions_bfs_rect.topleft = (screen_width - 150, 400)
     screen.blit(instructions_bfs, instructions_bfs_rect)
-
-    instructions_dfs = font.render("D: DFS", True, Colors.WHITE)
-    instructions_dfs_rect = instructions_dfs.get_rect()
-    instructions_dfs_rect.topleft = (screen_width - 300, 500)
-    screen.blit(instructions_dfs, instructions_dfs_rect)
-
-    instructions_astar = font.render("A: A*", True, Colors.WHITE)
-    instructions_astar_rect = instructions_astar.get_rect()
-    instructions_astar_rect.topleft = (screen_width - 300, 550)
-    screen.blit(instructions_astar, instructions_astar_rect)
-
-
-    if game_completed:
-        if AI_step != 0 and player_step_counter != 0:
-            if AI_step - (maze_size * 0.5) < player_step_counter:
-                outcome_text = "YOU WIN!!!"
-            elif AI_step - (maze_size * 0.5) > player_step_counter:
-                outcome_text = "YOU LOSE!!!"
-            else:
-                outcome_text = "DRAW!!!"
-        else:
-            outcome_text = "DONE!!!"
-
-    # Render and display the final outcome
-        instructions_win = font.render(outcome_text, True, Colors.WHITE)
-        instructions_win_rect = instructions_win.get_rect()
-        instructions_win_rect.topleft = (screen_width - 300, 100)
-        screen.blit(instructions_win, instructions_win_rect)
-
+    
     # Cập nhật màn hình
     pygame.display.flip()
     pygame.time.delay(30)

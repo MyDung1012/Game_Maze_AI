@@ -27,9 +27,9 @@ def draw_background():
 
 
 # Load slider images
-slider_image = pygame.image.load('Image/Slider.png')
+slider_image = pygame.image.load('Image/Slider.jpg')
 slider_image = pygame.transform.scale(slider_image, (280, 30))
-button_image = pygame.image.load('Image/Dragger.png')
+button_image = pygame.image.load('Image/Dragger.jpg')
 button_image = pygame.transform.scale(button_image, (30, 50))
 
 
@@ -45,11 +45,12 @@ def create_stars(num_stars):
         star = {
             'x': random.randint(0, screen_width),
             'y': random.randint(0, screen_height),
-            'size': random.randint(1, 3),
+            'size': random.randint(1, 2),
             'visible': True
         }
         stars.append(star)
     return stars
+
 
 # Draw background with stars
 def draw_background():
@@ -57,6 +58,7 @@ def draw_background():
     for star in stars:
         if star['visible']:
             pygame.draw.circle(screen, Colors.WHITE, (star['x'], star['y']), star['size'])
+
 
 # Draw colored text
 def draw_colored_text(surface, text, center):
@@ -77,7 +79,7 @@ def draw_colored_text(surface, text, center):
 # Draw rounded button
 def draw_rounded_button(surface, text, x, y, width, height, color, font_size):
     pygame.draw.rect(surface, color, (x, y, width, height), border_radius=15)
-    font = pygame.font.Font("Front/04054_BeamRider3D (1).ttf", font_size)
+    font = pygame.font.Font("Front/Jomplang-6Y3Jo.ttf", font_size)
     label = font.render(text, True, Colors.WHITE)
     text_rect = label.get_rect(center=(x + width // 2, y + height // 2))
     surface.blit(label, text_rect)
@@ -108,23 +110,15 @@ custom_font = pygame.font.Font("Front/UTM-Birds-Paradise.ttf", 20)
 
 
 # Main variables
-stars = create_stars(100)  # Generate 100 stars
+#stars = create_stars(10000)  # Generate 1000 stars
 difficulty_value = 10  # Initial difficulty level
 
 # Main game loop
 
-# Hàm vẽ thanh trượt độ khó
-"""def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, current_value):
-    pygame.draw.rect(surface, Colors.YELLOW, (x, y, width, height))
-    slider_x = x + int((current_value - min_value) / (max_value - min_value) * width)
-    pygame.draw.rect(surface, Colors.WHITE, (slider_x - 10, y - 5, 20, height + 10))
-    
-    # Hiển thị giá trị hiện tại của thanh trượt
-    font = pygame.font.SysFont("timesnewroman", 24, bold=True)
-    value_text = font.render(f"{current_value}", True, Colors.YELLOW)
-    surface.blit(value_text, (x + width + 20, y + (height // 2) - (value_text.get_height() // 2)))  # Xuất hiện bên phải thanh trượt
-"""
-stars = create_stars(100)
+stars = create_stars(500)
+
+
+
 
 # Vòng lặp chính
 
@@ -136,16 +130,12 @@ while True:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_x, mouse_y = pygame.mouse.get_pos()
 
-            #if screen_width // 2 - 140 <= mouse_x <= screen_width // 2 + 140 and 280 <= mouse_y <= 310:
-             #   difficulty_value = int((mouse_x - (screen_width // 2 - 140)) / 280 * 10) + 1
-
-
             # Kiểm tra nếu click vào thanh trượt
-            if screen_width // 2 - 140 <= mouse_x <= screen_width // 2 + 140 and 280 <= mouse_y <= 310:
-                difficulty_value = ((mouse_x - (screen_width // 2 - 140)) // 28 + 1) * 10
+            if screen_width // 2 - 140 <= mouse_x <= screen_width // 2 + 140 and 580 <= mouse_y <= 610:
+                difficulty_value = min(100, max(10, ((mouse_x - (screen_width // 2 - 140)) // 28) * 10))
 
             # Kiểm tra nếu click vào nút "Start"
-            elif screen_width // 2 - 100 <= mouse_x <= screen_width // 2 + 100 and 350 <= mouse_y <= 410:
+            elif screen_width // 2 - 100 <= mouse_x <= screen_width // 2 + 100 and 650 <= mouse_y <= 710:
                 pygame.mixer.music.stop()
    
 
@@ -165,19 +155,37 @@ while True:
    # background_sound.play()
 
 
-    draw_colored_text(screen, "AI MAZE GAME", (screen_width // 2, 0))
+    #draw_colored_text(screen, "AI MAZE GAME", (screen_width // 2, 0))
 
-    custom_text = custom_font.render("MADE BY DUNG - DUONG - TRAN", True, Colors.PINK)
-    subtitle_rect = custom_text.get_rect(center=(screen_width // 2, 90))
-    screen.blit(custom_text, subtitle_rect)
+    # Tải hình ảnh logo
+    logo_image = pygame.image.load('Image/logo.png')
+    logo_image = pygame.transform.scale(logo_image, (600, 394))  # Thay đổi kích thước logo theo ý muốn
+
+    logo_x = (screen_width - logo_image.get_width()) // 2 # Dời logo xuống dưới một chút
+    logo_y = 40  # Điều chỉnh giá trị này để dời logo xuống (số càng lớn càng xuống dưới)
+    screen.blit(logo_image, (logo_x, logo_y))
+
+    # Thêm BY DUNG-DUONG-TRAN
+    additional_image = pygame.image.load('Image/by DDT.png')  # Thay đổi đường dẫn tới ảnh của bạn
+    additional_image = pygame.transform.scale(additional_image, (600, 50))  # Thay đổi kích thước ảnh theo ý muốn
+
+    # Đặt vị trí của ảnh dưới logo
+    additional_x = (screen_width - additional_image.get_width()) // 2
+    additional_y = logo_y + logo_image.get_height() + 5  # Đặt ảnh dưới logo với khoảng cách 20 pixel
+    screen.blit(additional_image, (additional_x, additional_y))
+
+
+    #custom_text = custom_font.render("MADE BY DUNG - DUONG - TRAN", True, Colors.PINK)
+    #subtitle_rect = custom_text.get_rect(center=(screen_width // 2, 90))
+    #screen.blit(custom_text, subtitle_rect)
 
     difficulty_font = pygame.font.SysFont("timesnewroman", 24)
     difficulty_label = difficulty_font.render(" SIZE: ", True, Colors.WHITE)
-    screen.blit(difficulty_label, (screen_width // 2 - 230, 280))
+    screen.blit(difficulty_label, (screen_width // 2 - 230, 580))
 
-    draw_difficulty_slider(screen, screen_width // 2 - 140, 280, 280, 30, 10, 100, difficulty_value)
+    draw_difficulty_slider(screen, screen_width // 2 - 140, 580, 280, 30, 10, 100, difficulty_value)
 
-    draw_rounded_button(screen, "START", screen_width // 2 - 100, 350, 200, 60, Colors.DARK_BLUE, 36)
+    draw_rounded_button(screen, "START", screen_width // 2 - 100, 650, 200, 60, Colors.DARK_BLUE, 36)
     draw_rounded_button(screen, "Exit", screen_width - 220, screen_height - 80, 200, 60, Colors.DARK_BLUE, 36)
 
 
