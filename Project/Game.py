@@ -176,22 +176,22 @@ class Player:
             maze_matrix[new_row][new_col] == 0):
             
             # Xác định góc xoay dựa trên hướng di chuyển
-            if direction == (0, -1):  # Trái
-                self.image = pygame.transform.rotate(self.original_image, 90)
-            elif direction == (1, 0):  # Phải
-                self.image = pygame.transform.rotate(self.original_image, -90)
-            elif direction == (0, -1):  # Lên
+            if direction == (-1, 0):  # lên
                 self.image = pygame.transform.rotate(self.original_image, 0)
-            elif direction == (1, 0):  # Xuống
+            elif direction == (1, 0):  # xuống
                 self.image = pygame.transform.rotate(self.original_image, 180)
-            elif direction == (0, 1):
-                self.image = pygame.transform.rotate(self.original_image, 270)
-            elif direction == (1, 1):
-                self.image = pygame.transform.rotate(self.original_image, 315)
-            elif direction == (-1, 1):
+            elif direction == (0, -1):  # trái
+                self.image = pygame.transform.rotate(self.original_image, 90)
+            elif direction == (0, 1):  # Phải
+                self.image = pygame.transform.rotate(self.original_image, -90)
+            elif direction == (-1, -1):# xéo trái lên
                 self.image = pygame.transform.rotate(self.original_image, 45)
-            elif direction == (-1, 0):
-                self.image = pygame.transform.rotate(self.original_image, 225)
+            elif direction == (1, -1):# xéo trái xuống
+                self.image = pygame.transform.rotate(self.original_image, 135)
+            elif direction == (-1, 1):# xéo phải lên
+                self.image = pygame.transform.rotate(self.original_image, -45)
+            elif direction == (1, 1): # xéo phải xuống
+                self.image = pygame.transform.rotate(self.original_image, -135)
                 
             # Cập nhật vị trí
             self.row = new_row
@@ -545,13 +545,12 @@ while True:
     # Hiển thị hướng dẫn
     
     if AI_step > 0 and player_step_counter > 0:
-        if AI_step - (maze_size * 0.5) < player_step_counter:
+        if (AI_step + (maze_size * 0.2)) > player_step_counter and game_completed == True:
             outcome_text = "YOU WIN!!!"
-        elif AI_step - (maze_size * 0.5) > player_step_counter:
+        elif (AI_step + (maze_size * 0.2)) < player_step_counter and game_completed == True:
             outcome_text = "YOU LOSE!!!"
-        else:
-            outcome_text = "DRAW!!!"
-    elif AI_step == 0 and player_step_counter > 0:
+
+    elif AI_step == 0 and player_step_counter > 0 and game_completed == True:
         outcome_text = "CHOOSE AI ALGORITHM"
     elif AI_step == 0 and player_step_counter == 0:
         outcome_text = "IT'S YOUR TURN"
