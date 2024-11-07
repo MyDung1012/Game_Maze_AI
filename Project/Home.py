@@ -116,6 +116,7 @@ difficulty_value = 10  # Initial difficulty level
 # Main game loop
 
 stars = create_stars(500)
+slider_length = 300
 
 
 
@@ -131,9 +132,8 @@ while True:
             mouse_x, mouse_y = pygame.mouse.get_pos()
 
             # Kiểm tra nếu click vào thanh trượt
-            if screen_width // 2 - 140 <= mouse_x <= screen_width // 2 + 140 and 580 <= mouse_y <= 610:
-                difficulty_value = min(100, max(10, ((mouse_x - (screen_width // 2 - 140)) // 28) * 10))
-
+            if screen_width // 2 - slider_length // 2 <= mouse_x <= screen_width // 2 + slider_length // 2 and 580 <= mouse_y <= 610:
+                difficulty_value = max(10, min(100, round((mouse_x - (screen_width // 2 - slider_length // 2)) / slider_length * 10) * 10))
             # Kiểm tra nếu click vào nút "Start"
             elif screen_width // 2 - 100 <= mouse_x <= screen_width // 2 + 100 and 650 <= mouse_y <= 710:
                 pygame.mixer.music.stop()
