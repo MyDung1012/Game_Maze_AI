@@ -30,7 +30,7 @@ except (FileNotFoundError, ValueError) as e:
 # Tải hình ảnh và âm thanh complete
 win_image = pygame.image.load("Image/Done.jpg") 
 win_image = pygame.transform.scale(win_image, (600, 450))
-win_sound = pygame.mixer.Sound("Sound/chucmung.wav")
+win_sound = pygame.mixer.Sound("Sound/happy.mp3")
 close_button = pygame.Rect(screen_width // 2 + win_image.get_width() // 2 - 30,
                                    screen_height // 2 - win_image.get_height() // 2, 30, 30)
 
@@ -176,14 +176,22 @@ class Player:
             maze_matrix[new_row][new_col] == 0):
             
             # Xác định góc xoay dựa trên hướng di chuyển
-            if direction == (0, -1):  # Trái
-                self.image = pygame.transform.rotate(self.original_image, 90)
-            elif direction == (1, 0):  # Phải
-                self.image = pygame.transform.rotate(self.original_image, -90)
-            elif direction == (0, -1):  # Lên
+            if direction == (-1, 0):  # lên
                 self.image = pygame.transform.rotate(self.original_image, 0)
-            elif direction == (1, 0):  # Xuống
+            elif direction == (1, 0):  # xuống
                 self.image = pygame.transform.rotate(self.original_image, 180)
+            elif direction == (0, -1):  # trái
+                self.image = pygame.transform.rotate(self.original_image, 90)
+            elif direction == (0, 1):  # Phải
+                self.image = pygame.transform.rotate(self.original_image, -90)
+            elif direction == (-1, -1):# xéo trái lên
+                self.image = pygame.transform.rotate(self.original_image, 45)
+            elif direction == (1, -1):# xéo trái xuống
+                self.image = pygame.transform.rotate(self.original_image, 135)
+            elif direction == (-1, 1):# xéo phải lên
+                self.image = pygame.transform.rotate(self.original_image, -45)
+            elif direction == (1, 1): # xéo phải xuống
+                self.image = pygame.transform.rotate(self.original_image, -135)
                 
             # Cập nhật vị trí
             self.row = new_row
@@ -202,6 +210,112 @@ class Player:
         surface.blit(self.image, (x + (cell_width - self.image.get_width()) // 2, 
                                   y + (cell_height - self.image.get_height()) // 2))
 
+def solve_maze_bfs(maze, start, goal):
+    # 8 hướng di chuyển: trên, dưới, trái, phải, và 4 hướng chéo
+    directions = [
+        (-1, 0),  # lên
+        (1, 0),   # xuống
+        (0, -1),  # trái
+        (0, 1),   # phải
+        (-1, -1), # trên-trái
+        (-1, 1),  # trên-phải
+        (1, -1),  # dưới-trái
+        (1, 1)    # dưới-phải
+    ]
+    
+    rows = len(maze)
+    cols = len(maze[0])
+    
+    # Khởi tạo queue và visited set
+    queue = deque([(start)])
+    visited = {start}
+    
+    # Dictionary lưu đường đi
+    came_from = {}
+    
+    while queue:
+        current = queue.popleft()
+        
+        if current == goal:
+            # Tái tạo đường đi
+            path = []
+            while current in came_from:
+                prev = came_from[current]
+                path.append((current[0] - prev[0], current[1] - prev[1]))
+                current = prev
+            path.reverse()
+            return path
+            
+        # Kiểm tra tất cả các hướng có thể đi
+        for dx, dy in directions:
+            next_row = current[0] + dx
+            next_col = current[1] + dy
+            neighbor = (next_row, next_col)
+            
+            # Kiểm tra điều kiện hợp lệ
+            if (0 <= next_row < rows and 
+                0 <= next_col < cols and 
+                maze[next_row][next_col] == 0 and  # 0 là đường đi
+                neighbor not in visited):
+                
+                queue.append(neighbor)
+                visited.add(neighbor)
+                came_from[neighbor] = current
+    
+    return None  # Không tìm thấy đường đi
+def solve_maze_dfs(maze, start, goal):
+    # 8 hướng di chuyển: trên, dưới, trái, phải, và 4 hướng chéo
+    directions = [
+        (-1, 0),  # lên
+        (1, 0),   # xuống
+        (0, -1),  # trái
+        (0, 1),   # phải
+        (-1, -1), # trên-trái
+        (-1, 1),  # trên-phải
+        (1, -1),  # dưới-trái
+        (1, 1)    # dưới-phải
+    ]
+    
+    rows = len(maze)
+    cols = len(maze[0])
+    
+    # Khởi tạo stack và visited set
+    stack = [(start)]
+    visited = {start}
+    
+    # Dictionary lưu đường đi
+    came_from = {}
+    
+    while stack:
+        current = stack.pop()  # Lấy phần tử cuối cùng của stack
+        
+        if current == goal:
+            # Tái tạo đường đi
+            path = []
+            while current in came_from:
+                prev = came_from[current]
+                path.append((current[0] - prev[0], current[1] - prev[1]))
+                current = prev
+            path.reverse()
+            return path
+            
+        # Kiểm tra tất cả các hướng có thể đi
+        for dx, dy in directions:
+            next_row = current[0] + dx
+            next_col = current[1] + dy
+            neighbor = (next_row, next_col)
+            
+            # Kiểm tra điều kiện hợp lệ
+            if (0 <= next_row < rows and 
+                0 <= next_col < cols and 
+                maze[next_row][next_col] == 0 and  # 0 là đường đi
+                neighbor not in visited):
+                
+                stack.append(neighbor)
+                visited.add(neighbor)
+                came_from[neighbor] = current
+    
+    return None  # Không tìm thấy đường đi
 def heuristic(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
@@ -304,7 +418,11 @@ player_step_counter = 0  # Separate counter for player's manual steps
 game_completed = True
 sound_played = False  # Biến để kiểm soát việc phát âm thanh
 show_image = True
-
+def thongbao(outcome_text):
+    instructions_win = font.render(outcome_text, True, Colors.WHITE)
+    instructions_win_rect = instructions_win.get_rect()
+    instructions_win_rect.topleft = (screen_width - 300, 100)
+    screen.blit(instructions_win, instructions_win_rect)
 # Vòng lặp chính
 while True:
     for event in pygame.event.get():
@@ -350,19 +468,18 @@ while True:
                 print("BFS button clicked")
                 player.reset_position()
                 AI_step = 0
-                #auto_move_path = solve_maze_bfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
+                auto_move_path = solve_maze_bfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
                 auto_move_index = 0
             elif button_A.collidepoint(event.pos):
                 print("A* button clicked")
                 player.reset_position()
                 AI_step = 0
                 auto_move_path = solve_maze_astar(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                print(auto_move_path)
                 auto_move_index = 0
             elif button_dfs.collidepoint(event.pos):
                 player.reset_position()
                 AI_step = 0
-                #auto_move_path = solve_maze_dfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
+                auto_move_path = solve_maze_dfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
                 auto_move_index = 0
                 print("DFS button clicked")
             elif button_exit.collidepoint(event.pos):
@@ -426,9 +543,21 @@ while True:
         game_completed = True
     
     # Hiển thị hướng dẫn
+    
+    if AI_step > 0 and player_step_counter > 0:
+        if AI_step - (maze_size * 0.5) < player_step_counter:
+            outcome_text = "YOU WIN!!!"
+        elif AI_step - (maze_size * 0.5) > player_step_counter:
+            outcome_text = "YOU LOSE!!!"
+        else:
+            outcome_text = "DRAW!!!"
+    elif AI_step == 0 and player_step_counter > 0:
+        outcome_text = "CHOOSE AI ALGORITHM"
+    elif AI_step == 0 and player_step_counter == 0:
+        outcome_text = "IT'S YOUR TURN"
+    thongbao(outcome_text)
 
-
-    if  game_completed and show_image:
+    if game_completed and show_image:
         # Phát âm thanh một lần duy nhất
         if not sound_played:
             win_sound.play()
@@ -442,22 +571,8 @@ while True:
         close_text = font.render("X", True, (255, 255, 255))
         screen.blit(close_text, (close_button.x + 5, close_button.y))
 
-        # Hiển thị thông báo "DONE!!!"
-        if AI_step != 0 and player_step_counter != 0:
-            if AI_step - (maze_size * 0.5) < player_step_counter:
-                outcome_text = "YOU WIN!!!"
-            elif AI_step - (maze_size * 0.5) > player_step_counter:
-                outcome_text = "YOU LOSE!!!"
-            else:
-                outcome_text = "DRAW!!!"
-        else:
-            outcome_text = "DONE!!!"
 
-    # Render and display the final outcome
-        instructions_win = font.render(outcome_text, True, Colors.WHITE)
-        instructions_win_rect = instructions_win.get_rect()
-        instructions_win_rect.topleft = (screen_width - 300, 100)
-        screen.blit(instructions_win, instructions_win_rect)
+
 
        
     # Cập nhật màn hình
