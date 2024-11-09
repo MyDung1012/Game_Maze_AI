@@ -36,7 +36,7 @@ close_button = pygame.Rect(screen_width // 2 + win_image.get_width() // 2 - 30,
 
 # Load maze matrix
 try:
-    with open(f"maze/{maze_size}.txt", "r") as f:
+    with open(f"Maze/{maze_size}.txt", "r") as f:
         maze_matrix = json.load(f)
 except (FileNotFoundError, SyntaxError) as e:
     print(f"Error loading maze file: {e}")
@@ -387,10 +387,25 @@ def solve_maze_astar(maze, start, goal):
 def draw_rounded_button(button_rect, text, color, font_size,  radius=15):
     # Vẽ nền nút với bo góc
     pygame.draw.rect(screen, color, button_rect, border_radius=radius)
-    font = pygame.font.Font("Front/Jomplang-6Y3Jo.ttf", font_size)
+    font = pygame.font.Font("Font/Jomplang-6Y3Jo.ttf", font_size)
     label = font.render(text, True, Colors.WHITE)
     text_rect = label.get_rect(center=button_rect.center)
     screen.blit(label, text_rect)
+
+def display_outcome_box(text):
+    # Vị trí và kích thước của bảng thông báo
+    box_width, box_height = 400, 200
+    box_x = (screen_width - box_width) // 2
+    box_y = (screen_height - box_height) // 2
+
+    # Vẽ bảng (hình chữ nhật) và hiển thị nội dung
+    pygame.draw.rect(screen, (0, 0, 0), (box_x, box_y, box_width, box_height))
+    pygame.draw.rect(screen, (255, 255, 255), (box_x, box_y, box_width, box_height), 2)
+    
+    # Hiển thị nội dung outcome_text
+    text_surface = font.render(text, True, (255, 255, 255))
+    text_rect = text_surface.get_rect(center=(screen_width // 2, screen_height // 2))
+    screen.blit(text_surface, text_rect)
 
 button_reset = pygame.Rect(screen_width - 220, screen_height - 480, 200, 60)
 button_dfs = pygame.Rect(screen_width - 220, screen_height - 400, 200, 60)
@@ -421,8 +436,11 @@ show_image = True
 def thongbao(outcome_text):
     instructions_win = font.render(outcome_text, True, Colors.WHITE)
     instructions_win_rect = instructions_win.get_rect()
-    instructions_win_rect.topleft = (screen_width - 300, 100)
+    instructions_win_rect.topleft = (screen_width - 300, 250)
     screen.blit(instructions_win, instructions_win_rect)
+
+  # Thời gian bắt đầu hiển thị thông báo
+
 # Vòng lặp chính
 while True:
     for event in pygame.event.get():
@@ -495,7 +513,8 @@ while True:
                     win_sound.stop()
     screen.fill((0, 0, 0))
 
-
+    show_outcome = False  # Biến điều kiện để hiển thị thông báo
+    outcome_time = 0
     # Check if it's time to move to the next step
     if auto_move_path and auto_move_index < len(auto_move_path):
         direction = auto_move_path[auto_move_index]
@@ -522,12 +541,33 @@ while True:
     player.draw(screen)
     
     # Draw AI step counter
-    ai_step_text = font.render(f"AI Steps: {AI_step}", True, Colors.WHITE)
-    screen.blit(ai_step_text, (screen_width - 300, 150))  # Display above player steps
+    # Định nghĩa kích thước và màu sắc của textbox
+    textbox_width = 300
+    textbox_height = 50
+    textbox_color = Colors.PINK  # Màu nền của textbox
+    border_color = Colors.WHITE  # Màu viền của textbox
+    border_thickness = 3  # Độ dày của viền
 
-    # Draw player step counter
+    # Textbox cho số bước của AI
+    ai_textbox_rect = pygame.Rect(screen_width - 400, 60, textbox_width, textbox_height)
+    pygame.draw.rect(screen, border_color, ai_textbox_rect, border_thickness)  # Vẽ viền
+    pygame.draw.rect(screen, textbox_color, ai_textbox_rect.inflate(-border_thickness*2, -border_thickness*2))  # Vẽ nền
+
+    # Hiển thị số bước của AI
+    ai_step_text = font.render(f"AI Steps: {AI_step}", True, Colors.WHITE)
+    ai_text_rect = ai_step_text.get_rect(center=ai_textbox_rect.center)  # Canh giữa văn bản trong textbox
+    screen.blit(ai_step_text, ai_text_rect)
+
+    # Textbox cho số bước của người chơi
+    player_textbox_rect = pygame.Rect(screen_width - 400, 140, textbox_width, textbox_height)
+    pygame.draw.rect(screen, border_color, player_textbox_rect, border_thickness)  # Vẽ viền
+    pygame.draw.rect(screen, textbox_color, player_textbox_rect.inflate(-border_thickness*2, -border_thickness*2))  # Vẽ nền
+
+    # Hiển thị số bước của người chơi
     step_text = font.render(f"Steps: {player_step_counter}", True, Colors.WHITE)
-    screen.blit(step_text, (screen_width - 300, 200))
+    step_text_rect = step_text.get_rect(center=player_textbox_rect.center)  # Canh giữa văn bản trong textbox
+    screen.blit(step_text, step_text_rect)
+
 
     draw_rounded_button(button_reset, "Reset", Colors.DARK_BLUE, 36 )
     draw_rounded_button(button_home, "Home",Colors.DARK_BLUE, 36)
@@ -545,16 +585,18 @@ while True:
     # Hiển thị hướng dẫn
     
     if AI_step > 0 and player_step_counter > 0:
-        if (AI_step + (maze_size * 0.2)) > player_step_counter and game_completed == True:
+        if AI_step + (maze_size * 0.2) > player_step_counter:
             outcome_text = "YOU WIN!!!"
-        elif (AI_step + (maze_size * 0.2)) < player_step_counter and game_completed == True:
+        elif AI_step + (maze_size * 0.2) < player_step_counter:
             outcome_text = "YOU LOSE!!!"
-
-    elif AI_step == 0 and player_step_counter > 0 and game_completed == True:
+        else:
+            outcome_text = "DRAW!!!"
+    elif AI_step == 0 and player_step_counter > 0:
         outcome_text = "CHOOSE AI ALGORITHM"
     elif AI_step == 0 and player_step_counter == 0:
         outcome_text = "IT'S YOUR TURN"
     thongbao(outcome_text)
+
 
     if game_completed and show_image:
         # Phát âm thanh một lần duy nhất
@@ -569,9 +611,6 @@ while True:
         pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
         close_text = font.render("X", True, (255, 255, 255))
         screen.blit(close_text, (close_button.x + 5, close_button.y))
-
-
-
 
        
     # Cập nhật màn hình
