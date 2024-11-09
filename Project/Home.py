@@ -3,28 +3,26 @@ import sys
 import random
 from Colors import Colors
 
-# Initialize pygame
+
 pygame.init()
 
 
-# Screen dimensions
 info = pygame.display.Info()
 screen_width, screen_height = info.current_w, info.current_h
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
 pygame.display.set_caption("Maze Game Home")
 
 
-# Âm thanh
+# âm thanh
 pygame.mixer.music.load('Sound/chillmusic.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play()
-# Tạo màu nền hồng
-def draw_background():
-    screen.fill((0, 0, 0))
-    for star in stars:
-        if star['visible']:
-            pygame.draw.circle(screen, Colors.WHITE, (star['x'], star['y']), star['size'])
 
+# Hình độ khó
+slider_image = pygame.image.load('Image/Slider.jpg')
+slider_image = pygame.transform.scale(slider_image, (280, 30))
+button_image = pygame.image.load('Image/Dragger.jpg')
+button_image = pygame.transform.scale(button_image, (30, 50))
 
 # Load slider images
 slider_image = pygame.image.load('Image/Slider.jpg')
@@ -37,8 +35,14 @@ button_image = pygame.transform.scale(button_image, (30, 50))
 difficulty_images = [pygame.image.load(f'Image/Level{i}.png') for i in range(1, 2)]
 difficulty_images = [pygame.transform.scale(img, (200, 200)) for img in difficulty_images]
 
+# Hàm vẽ nền
+def draw_background():
+    screen.fill((0, 0, 0))
+    for star in stars:
+        if star['visible']:
+            pygame.draw.circle(screen, Colors.WHITE, (star['x'], star['y']), star['size'])
 
-# Create a list of stars for the background
+# tạo các ngôi sao trên nền
 def create_stars(num_stars):
     stars = []
     for _ in range(num_stars):
@@ -52,7 +56,7 @@ def create_stars(num_stars):
     return stars
 
 
-# Draw background with stars
+# Vẽ nền với ngôi sao
 def draw_background():
     screen.fill((0, 0, 0))
     for star in stars:
@@ -98,9 +102,108 @@ def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, c
         # Nếu không, có thể vẽ một hình ảnh mặc định hoặc không làm gì cả
         print("Current value is out of range for difficulty images.")
     
-    font = pygame.font.SysFont("timesnewroman", 24, bold=True)
+    font = pygame.font.SysFont("timesnewroman", 20, bold=True)
     value_text = font.render(f"{current_value}", True, Colors.YELLOW)
     surface.blit(value_text, (x + width + 20, y + (height // 2) - (value_text.get_height() // 2)))
+
+import pygame
+
+# Hàm để chia nhỏ văn bản thành các dòng phù hợp với chiều rộng
+def text_wrap(text, font, max_width):
+    words = text.split()
+    wrapped_lines = []
+    line = ""
+
+    for word in words:
+        test_line = f"{line} {word}".strip()
+        if font.size(test_line)[0] <= max_width:
+            line = test_line
+        else:
+            wrapped_lines.append(line)
+            line = word
+    if line:
+        wrapped_lines.append(line)
+    return wrapped_lines
+
+def draw_instruction_popup(current_page):
+    popup_width, popup_height = 600, 400
+    popup_x = (screen_width - popup_width) // 2
+    popup_y = (screen_height - popup_height) // 2
+
+    pygame.draw.rect(screen, Colors.YELLOW_BLACK, (popup_x, popup_y, popup_width, popup_height), border_radius=15)
+    
+    # Sử dụng phông chữ Times New Roman với kích thước 36
+    font = pygame.font.SysFont("timesnewroman", 22)
+
+    # Chia văn bản thành các trang
+    pages = [
+        [
+            "MAZE AI GAME - KHÁM PHÁ VÀ CHINH PHỤC.",
+            "",
+            "Chào mừng bạn đến với Maze AI Game! Đây là trò chơi nơi bạn sẽ được trải nghiệm và thử thách bản thân qua một mê cung được xây dựng thông minh bằng các thuật toán trí tuệ nhân tạo. Game sử dụng các thuật toán nổi tiếng như BFS (Tìm kiếm theo chiều rộng), DFS (Tìm kiếm theo chiều sâu) và A*, giúp người chơi định hướng và tìm đường thoát một cách hiệu quả.",
+        ],
+        [
+            "HƯỚNG DẪN DI CHUYỂN",
+            "8 - Di chuyển lên trên",
+            "2 - Di chuyển xuống dưới",
+            "4 - Di chuyển qua trái",
+            "6 - Di chuyển qua phải",
+            "7 - Di chuyển lên xéo bên trái",
+            "9 - Di chuyển lên xéo bên phải",
+            "1 - Di chuyển xuống xéo trái",
+            "3 - Di chuyển xuống xéo phải",
+        ],
+        [
+            "QUY TẮC TRÒ CHƠI",
+            "",
+            "Khi bạn đã hoàn thành trò chơi. Hãy nhấn lựa chọn một thuật toán AI bất kỳ. Bạn sẽ thắng nếu số bước đi của bạn ít hơn số bước đi của AI",
+            "",
+            "",
+            "CHƠI VUI!",
+        ]
+    ]
+
+    centered_lines = [
+        "MAZE AI GAME - KHÁM PHÁ VÀ CHINH PHỤC.",
+        "HƯỚNG DẪN DI CHUYỂN",
+        "QUY TẮC TRÒ CHƠI",
+        "CHƠI VUI!",
+    ]
+
+    # Hiển thị văn bản của trang hiện tại
+    lines = pages[current_page]
+    y_offset = popup_y + 20  # Vị trí bắt đầu cho dòng đầu tiên
+
+    for line in lines:
+        # Loại bỏ các dòng trống chỉ chứa khoảng trắng
+        if line.strip():  # Chỉ xử lý dòng có chứa ký tự không phải khoảng trắng
+            wrapped_lines = text_wrap(line, font, popup_width - 40)
+        
+            for wrapped_line in wrapped_lines:
+                instruction_text = font.render(wrapped_line, True, Colors.WHITE)
+                
+                # Kiểm tra nếu dòng hiện tại cần căn giữa
+                if wrapped_line.strip() in centered_lines:
+                    text_rect = instruction_text.get_rect(center=(popup_x + popup_width // 2, y_offset))  # Căn giữa
+                else:
+                    text_rect = instruction_text.get_rect(topleft=(popup_x + 10, y_offset))  # Căn trái
+                
+                screen.blit(instruction_text, text_rect)
+                y_offset += font.get_height() + 5  # Tăng y_offset để dòng tiếp theo xuống dưới
+        else:
+            y_offset += font.get_height() + 10  # Điều chỉnh khoảng cách giữa các đoạn văn nếu dòng trống
+
+
+    # Nếu chưa phải trang cuối, vẽ nút mũi tên để chuyển trang
+    if current_page < len(pages) - 1:
+        draw_rounded_button(screen, "Next >", popup_x + popup_width - 100, popup_y + popup_height - 60, 80, 40, Colors.RED, 24)
+    else:
+        # Nếu là trang cuối cùng, vẽ nút CLOSE
+        draw_rounded_button(screen, "CLOSE", popup_x + popup_width - 100, popup_y + popup_height - 60, 80, 40, Colors.RED, 24)
+
+    # Trả về tọa độ và kích thước popup
+    return popup_x, popup_y, popup_width, popup_height
+
 
 
 
@@ -117,12 +220,12 @@ difficulty_value = 10  # Initial difficulty level
 
 stars = create_stars(500)
 slider_length = 300
-
+show_instruction = False  
 
 
 
 # Vòng lặp chính
-
+current_page = 0 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -147,7 +250,20 @@ while True:
             elif screen_width - 220 <= mouse_x <= screen_width - 20 and screen_height - 80 <= mouse_y <= screen_height - 20:
                 pygame.quit()
                 sys.exit()
-
+            elif not show_instruction and 0 <= mouse_x <= 200 and screen_height - 80 <= mouse_y <= screen_height - 20:
+                show_instruction = True  # Hiển thị bảng thông báo
+                current_page = 0  # Đặt lại trang về trang đầu tiên
+            
+                # Gọi hàm vẽ popup để lấy tọa độ popup
+            popup_x, popup_y, popup_width, popup_height = draw_instruction_popup(current_page)
+                
+                # Nếu nhấn vào nút "Next >", chuyển sang trang tiếp theo
+            if current_page < 2:  # Kiểm tra nếu chưa phải trang cuối
+                if popup_x + popup_width - 100 <= mouse_x <= popup_x + popup_width - 20 and popup_y + popup_height - 60 <= mouse_y <= popup_y + popup_height - 20:
+                        current_page += 1  # Chuyển sang trang tiếp theo
+            else:  # Trang cuối cùng, nút CLOSE
+                if popup_x + popup_width - 100 <= mouse_x <= popup_x + popup_width - 20 and popup_y + popup_height - 60 <= mouse_y <= popup_y + popup_height - 20:
+                        show_instruction  = False  # Đóng bảng
 
 
 
@@ -173,11 +289,6 @@ while True:
     additional_y = logo_y + logo_image.get_height() + 5  # Đặt ảnh dưới logo với khoảng cách 20 pixel
     screen.blit(additional_image, (additional_x, additional_y))
 
-
-    #custom_text = custom_font.render("MADE BY DUNG - DUONG - TRAN", True, Colors.PINK)
-    #subtitle_rect = custom_text.get_rect(center=(screen_width // 2, 90))
-    #screen.blit(custom_text, subtitle_rect)
-
     difficulty_font = pygame.font.SysFont("timesnewroman", 24)
     difficulty_label = difficulty_font.render(" SIZE: ", True, Colors.WHITE)
     screen.blit(difficulty_label, (screen_width // 2 - 230, 580))
@@ -185,8 +296,11 @@ while True:
     draw_difficulty_slider(screen, screen_width // 2 - 140, 580, 280, 30, 10, 100, difficulty_value)
 
     draw_rounded_button(screen, "START", screen_width // 2 - 100, 650, 200, 60, Colors.DARK_BLUE, 36)
-    draw_rounded_button(screen, "Exit", screen_width - 220, screen_height - 80, 200, 60, Colors.DARK_BLUE, 36)
+    draw_rounded_button(screen, "EXIT", screen_width - 220, screen_height - 80, 200, 60, Colors.DARK_BLUE, 36)
+    draw_rounded_button(screen, "INSTRUCTION", 0, screen_height - 80, 200, 60, Colors.DARK_BLUE, 36)
 
+    if show_instruction:
+        draw_instruction_popup(current_page)
 
     for star in stars:
         if random.random() < 0.01:
