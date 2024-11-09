@@ -63,7 +63,7 @@ def draw_background():
 # Draw colored text
 def draw_colored_text(surface, text, center):
     colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 165, 0), (75, 0, 130), (238, 130, 238)]
-    font = pygame.font.Font("Front/diego3d.ttf", 60)
+    font = pygame.font.Font("Font/diego3d.ttf", 60)
     angle = 0
     total_width = sum(font.size(char)[0] * 1.2 for char in text)
     start_x = (screen_width - total_width) // 2
@@ -79,7 +79,7 @@ def draw_colored_text(surface, text, center):
 # Draw rounded button
 def draw_rounded_button(surface, text, x, y, width, height, color, font_size):
     pygame.draw.rect(surface, color, (x, y, width, height), border_radius=15)
-    font = pygame.font.Font("Front/Jomplang-6Y3Jo.ttf", font_size)
+    font = pygame.font.Font("Font/Jomplang-6Y3Jo.ttf", font_size)
     label = font.render(text, True, Colors.WHITE)
     text_rect = label.get_rect(center=(x + width // 2, y + height // 2))
     surface.blit(label, text_rect)
@@ -105,7 +105,7 @@ def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, c
 
 
 # Set custom font
-custom_font = pygame.font.Font("Front/UTM-Birds-Paradise.ttf", 20)
+custom_font = pygame.font.Font("Font/UTM-Birds-Paradise.ttf", 20)
 #difficulty_value = 10  # Giá trị ban đầu của thanh trượt là 10
 
 
