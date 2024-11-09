@@ -36,7 +36,7 @@ close_button = pygame.Rect(screen_width // 2 + win_image.get_width() // 2 - 30,
 
 # Load maze matrix
 try:
-    with open(f"maze/{maze_size}.txt", "r") as f:
+    with open(f"Maze/{maze_size}.txt", "r") as f:
         maze_matrix = json.load(f)
 except (FileNotFoundError, SyntaxError) as e:
     print(f"Error loading maze file: {e}")
@@ -176,22 +176,22 @@ class Player:
             maze_matrix[new_row][new_col] == 0):
             
             # Xác định góc xoay dựa trên hướng di chuyển
-            if direction == (0, -1):  # Trái
-                self.image = pygame.transform.rotate(self.original_image, 90)
-            elif direction == (1, 0):  # Phải
-                self.image = pygame.transform.rotate(self.original_image, -90)
-            elif direction == (0, -1):  # Lên
+            if direction == (-1, 0):  # lên
                 self.image = pygame.transform.rotate(self.original_image, 0)
-            elif direction == (1, 0):  # Xuống
+            elif direction == (1, 0):  # xuống
                 self.image = pygame.transform.rotate(self.original_image, 180)
-            elif direction == (0, 1):
-                self.image = pygame.transform.rotate(self.original_image, 270)
-            elif direction == (1, 1):
-                self.image = pygame.transform.rotate(self.original_image, 315)
-            elif direction == (-1, 1):
+            elif direction == (0, -1):  # trái
+                self.image = pygame.transform.rotate(self.original_image, 90)
+            elif direction == (0, 1):  # Phải
+                self.image = pygame.transform.rotate(self.original_image, -90)
+            elif direction == (-1, -1):# xéo trái lên
                 self.image = pygame.transform.rotate(self.original_image, 45)
-            elif direction == (-1, 0):
-                self.image = pygame.transform.rotate(self.original_image, 225)
+            elif direction == (1, -1):# xéo trái xuống
+                self.image = pygame.transform.rotate(self.original_image, 135)
+            elif direction == (-1, 1):# xéo phải lên
+                self.image = pygame.transform.rotate(self.original_image, -45)
+            elif direction == (1, 1): # xéo phải xuống
+                self.image = pygame.transform.rotate(self.original_image, -135)
                 
             # Cập nhật vị trí
             self.row = new_row
@@ -387,7 +387,7 @@ def solve_maze_astar(maze, start, goal):
 def draw_rounded_button(button_rect, text, color, font_size,  radius=15):
     # Vẽ nền nút với bo góc
     pygame.draw.rect(screen, color, button_rect, border_radius=radius)
-    font = pygame.font.Font("Front/Jomplang-6Y3Jo.ttf", font_size)
+    font = pygame.font.Font("Font/Jomplang-6Y3Jo.ttf", font_size)
     label = font.render(text, True, Colors.WHITE)
     text_rect = label.get_rect(center=button_rect.center)
     screen.blit(label, text_rect)
@@ -545,9 +545,9 @@ while True:
     # Hiển thị hướng dẫn
     
     if AI_step > 0 and player_step_counter > 0:
-        if AI_step - (maze_size * 0.5) < player_step_counter:
+        if AI_step - (maze_size * 0.2) < player_step_counter:
             outcome_text = "YOU WIN!!!"
-        elif AI_step - (maze_size * 0.5) > player_step_counter:
+        elif AI_step - (maze_size * 0.2) > player_step_counter:
             outcome_text = "YOU LOSE!!!"
         else:
             outcome_text = "DRAW!!!"
@@ -570,9 +570,6 @@ while True:
         pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
         close_text = font.render("X", True, (255, 255, 255))
         screen.blit(close_text, (close_button.x + 5, close_button.y))
-
-
-
 
        
     # Cập nhật màn hình
