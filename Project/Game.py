@@ -368,7 +368,7 @@ def solve_maze_astar(maze, start, goal):
             # Kiểm tra điều kiện hợp lệ
             if (neighbor[0] < 0 or neighbor[0] >= rows or 
                 neighbor[1] < 0 or neighbor[1] >= cols or
-                maze[neighbor[0]][neighbor[1]] == 1 or  # 0 là tường
+                maze[neighbor[0]][neighbor[1]] == 1 or  # 1 là tường
                 neighbor in closed_set):
                 continue
                 
