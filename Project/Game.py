@@ -34,6 +34,15 @@ win_sound = pygame.mixer.Sound("Sound/happy.mp3")
 close_button = pygame.Rect(screen_width // 2 + win_image.get_width() // 2 - 30,
                                    screen_height // 2 - win_image.get_height() // 2, 30, 30)
 
+# Tải hình ảnh kết quả
+win_imagee = pygame.image.load("Image/win.jpg")
+lose_image = pygame.image.load("Image/lose.jpg")
+
+# Điều chỉnh kích thước hình ảnh nếu cần
+win_image = pygame.transform.scale(win_imagee, (600, 450))
+lose_image = pygame.transform.scale(lose_image, (600, 450))
+
+
 # Load maze matrix
 try:
     with open(f"Maze/{maze_size}.txt", "r") as f:
@@ -433,6 +442,7 @@ player_step_counter = 0  # Separate counter for player's manual steps
 game_completed = True
 sound_played = False  # Biến để kiểm soát việc phát âm thanh
 show_image = True
+ai_completed = False
 def thongbao(outcome_text):
     instructions_win = font.render(outcome_text, True, Colors.WHITE)
     instructions_win_rect = instructions_win.get_rect()
@@ -505,12 +515,13 @@ while True:
                 pygame.quit()
                 sys.exit()  # Thoát khỏi trò chơi
             
-        if event.type == pygame.MOUSEBUTTONDOWN and show_image:
+        if event.type == pygame.MOUSEBUTTONDOWN: #and show_image:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
             # Kiểm tra nếu chuột nhấn vào nút đóng
                 if close_button.collidepoint(mouse_x, mouse_y):
                     show_image = False  # Ẩn hình ảnh
                     win_sound.stop()
+
     screen.fill((0, 0, 0))
 
     show_outcome = False  # Biến điều kiện để hiển thị thông báo
@@ -522,6 +533,9 @@ while True:
         auto_move_index += 1  # Move to the next step
         AI_step += 1  # Increment AI_step for each move
         pygame.time.delay(100)  # Delay of 0.1 seconds (100 milliseconds)
+
+        if auto_move_index >= len(auto_move_path):
+            ai_completed = True 
 
     screen.blit(background_image, (0, 0))
 
@@ -584,13 +598,27 @@ while True:
     
     # Hiển thị hướng dẫn
     
-    if AI_step > 0 and player_step_counter > 0:
+    if ai_completed and player_step_counter > 0:
         if AI_step + (maze_size * 0.2) > player_step_counter:
             outcome_text = "YOU WIN!!!"
         elif AI_step + (maze_size * 0.2) < player_step_counter:
             outcome_text = "YOU LOSE!!!"
         else:
             outcome_text = "DRAW!!!"
+
+        if outcome_text == "YOU WIN!!!" and show_image:
+            screen.blit(win_imagee, (screen_width // 2 - win_image.get_width() // 2,
+                                    screen_height // 2 - win_image.get_height() // 2))
+            pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
+            close_text = font.render("X", True, (255, 255, 255))
+            screen.blit(close_text, (close_button.x + 5, close_button.y))
+        elif outcome_text == "YOU LOSE!!!" and show_image:
+                screen.blit(lose_image, (screen_width // 2 - lose_image.get_width() // 2,
+                                        screen_height // 2 - lose_image.get_height() // 2))
+                pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
+                close_text = font.render("X", True, (255, 255, 255))
+                screen.blit(close_text, (close_button.x + 5, close_button.y))
+
     elif AI_step == 0 and player_step_counter > 0:
         outcome_text = "CHOOSE AI ALGORITHM"
     elif AI_step == 0 and player_step_counter == 0:
@@ -598,20 +626,8 @@ while True:
     thongbao(outcome_text)
 
 
-    if game_completed and show_image:
-        # Phát âm thanh một lần duy nhất
-        if not sound_played:
-            win_sound.play()
-            sound_played = True
-        
-        # Hiển thị hình ảnh ở giữa màn hình
-        screen.blit(win_image, (screen_width // 2 - win_image.get_width() // 2,
-                                screen_height // 2 - win_image.get_height() // 2))
 
-        pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
-        close_text = font.render("X", True, (255, 255, 255))
-        screen.blit(close_text, (close_button.x + 5, close_button.y))
-
+    
        
     # Cập nhật màn hình
     pygame.display.flip()
