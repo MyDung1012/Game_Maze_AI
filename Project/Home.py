@@ -185,7 +185,7 @@ def draw_instruction_popup(current_page):
                 # Kiểm tra nếu dòng hiện tại cần căn giữa
                 if wrapped_line.strip() in centered_lines:
                     text_rect = instruction_text.get_rect(center=(popup_x + popup_width // 2, y_offset))  # Căn giữa
-                else:
+                else:   
                     text_rect = instruction_text.get_rect(topleft=(popup_x + 10, y_offset))  # Căn trái
                 
                 screen.blit(instruction_text, text_rect)
