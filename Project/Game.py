@@ -39,7 +39,16 @@ win_sound = pygame.mixer.Sound("Sound/happy.mp3")
 close_button = pygame.Rect(screen_width // 2 + win_image.get_width() // 2 - 30,
                            screen_height // 2 - win_image.get_height() // 2, 30, 30)
 
-# Load maze matrix từ file dựa trên kích thước
+# Tải hình ảnh kết quả
+win_imagee = pygame.image.load("Image/win.jpg")
+lose_image = pygame.image.load("Image/lose.jpg")
+
+# Điều chỉnh kích thước hình ảnh nếu cần
+win_image = pygame.transform.scale(win_imagee, (600, 450))
+lose_image = pygame.transform.scale(lose_image, (600, 450))
+
+
+# Load maze matrix
 try:
     with open(f"Maze/{maze_size}.txt", "r") as f:
         maze_matrix = json.load(f)
@@ -414,19 +423,85 @@ def solve_maze_astar(maze, start, goal):
     
     return None  # Không tìm thấy đường đi
 
-def draw_rounded_button(button_rect, text, color, font_size, border_color=(255, 255, 153), border_thickness=3, radius=15):
-    # Vẽ viền vàng xung quanh nút
-    pygame.draw.rect(screen, border_color, button_rect, border_thickness, border_radius=radius)
+def draw_rounded_button(button_rect, text, color, font_size, border_color_outer=(186, 85, 211), border_color_inner=(255, 215, 0), border_thickness=3, radius=0, offset_x=-40):
+    # Điều chỉnh vị trí của nút bằng cách dịch sang trái `offset_x` pixel
+    adjusted_rect = button_rect.move(offset_x, 0)
     
-    # Vẽ nền nút với bo góc (trừ đi độ dày của viền để nền không đè lên viền)
-    inner_rect = button_rect.inflate(-border_thickness*2, -border_thickness*2)
-    pygame.draw.rect(screen, color, inner_rect, border_radius=radius)
+    # Vẽ viền ngoài màu tím
+    pygame.draw.rect(screen, border_color_outer, adjusted_rect, border_thickness + 2, border_radius=radius)
+    
+    # Vẽ viền trong màu vàng
+    pygame.draw.rect(screen, border_color_inner, adjusted_rect.inflate(-border_thickness * 2, -border_thickness * 2), border_thickness, border_radius=radius)
+    
+    # Vẽ nền nút bên trong
+    pygame.draw.rect(screen, color, adjusted_rect.inflate(-border_thickness * 4, -border_thickness * 4), border_radius=radius)
     
     # Vẽ chữ trên nút
     font = pygame.font.Font("Font/Jomplang-6Y3Jo.ttf", font_size)
     label = font.render(text, True, Colors.WHITE)
-    text_rect = label.get_rect(center=button_rect.center)
-    screen.blit(label, text_rect)
+    screen.blit(label, label.get_rect(center=adjusted_rect.center))
+
+def solve_backtracking(maze, start, goal):
+    directions = [
+        (-1, 0),  # lên
+        (1, 0),   # xuống
+        (0, -1),  # trái
+        (0, 1),   # phải
+        (-1, -1), # trên-trái
+        (-1, 1),  # trên-phải
+        (1, -1),  # dưới-trái
+        (1, 1)    # dưới-phải
+    ]
+    
+    def heuristic(cell):
+        return abs(cell[0] - goal[0]) + abs(cell[1] - goal[1])
+
+    # Lưu vị trí đã ghé qua để tránh lặp lại
+    visited = set()
+    # Cache để lưu lại các đường cụt
+    failed_paths = set()
+
+    path = []
+
+    def backtrack(current):
+        # Nếu đã đến đích, trả về True
+        if current == goal:
+            return True
+
+        # Đánh dấu vị trí đã thăm
+        visited.add(current)
+
+        # Sắp xếp các hướng đi theo khoảng cách tới đích
+        sorted_directions = sorted(directions, key=lambda d: heuristic((current[0] + d[0], current[1] + d[1])))
+
+        for direction in sorted_directions:
+            next_cell = (current[0] + direction[0], current[1] + direction[1])
+
+            # Kiểm tra tính hợp lệ của ô tiếp theo
+            if (0 <= next_cell[0] < len(maze) and 0 <= next_cell[1] < len(maze[0]) and
+                    maze[next_cell[0]][next_cell[1]] == 0 and next_cell not in visited):
+
+                # Thêm bước đi vào đường đi
+                path.append(direction)
+                
+                # Nếu tìm được đường đi đến đích, kết thúc
+                if backtrack(next_cell):
+                    return True
+
+                # Quay lui nếu không tìm được đường đi
+                path.pop()
+
+        # Đánh dấu đường cụt để tránh đi lại lần nữa
+        visited.remove(current)
+        failed_paths.add(current)
+        return False
+
+    # Chạy backtracking từ điểm bắt đầu
+    if backtrack(start):
+        return path  # Trả về danh sách các bước di chuyển
+    else:
+        return None  # Không tìm thấy đường đi
+
 
 def display_outcome_box(text):
     # Vị trí và kích thước của bảng thông báo
@@ -443,12 +518,15 @@ def display_outcome_box(text):
     text_rect = text_surface.get_rect(center=(screen_width // 2, screen_height // 2))
     screen.blit(text_surface, text_rect)
 
-button_reset = pygame.Rect(screen_width - 300, screen_height - 480, 200, 60)
-button_dfs = pygame.Rect(screen_width - 300, screen_height - 400, 200, 60)
-button_bfs = pygame.Rect(screen_width - 300, screen_height - 320, 200, 60)
-button_A = pygame.Rect(screen_width - 300, screen_height - 240, 200, 60)
-button_home = pygame.Rect(screen_width - 300, screen_height - 160, 200, 60)
-button_exit = pygame.Rect(screen_width - 300, screen_height - 80, 200, 60)
+button_reset = pygame.Rect(screen_width - 220, screen_height - 560, 200, 60)
+button_backtracking = pygame.Rect(screen_width - 220, screen_height - 480, 200, 60) 
+button_dfs = pygame.Rect(screen_width - 220, screen_height - 400, 200, 60)
+button_bfs = pygame.Rect(screen_width - 220, screen_height - 320, 200, 60)
+button_A = pygame.Rect(screen_width - 220, screen_height - 240, 200, 60)
+button_home = pygame.Rect(screen_width - 220, screen_height - 160, 200, 60)
+button_exit = pygame.Rect(screen_width - 220, screen_height - 80, 200, 60)
+
+
 # Add after maze initialization
 player = Player(0, 0)  # Changed from Player(1, 1)
 
@@ -469,6 +547,7 @@ player_step_counter = 0  # Separate counter for player's manual steps
 game_completed = True
 sound_played = False  # Biến để kiểm soát việc phát âm thanh
 show_image = True
+ai_completed = False
 def thongbao(outcome_text):
     instructions_win = font.render(outcome_text, True, Colors.WHITE)
     instructions_win_rect = instructions_win.get_rect()
@@ -536,17 +615,24 @@ while True:
                 auto_move_path = solve_maze_dfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
                 auto_move_index = 0
                 print("DFS button clicked")
+            elif button_backtracking.collidepoint(event.pos):
+                player.reset_position()
+                AI_step = 0
+                auto_move_path = solve_backtracking(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
+                auto_move_index = 0
+                print("Backtracking with AC3 button clicked")
             elif button_exit.collidepoint(event.pos):
                 print("Exit button clicked")
                 pygame.quit()
                 sys.exit()  # Thoát khỏi trò chơi
             
-        if event.type == pygame.MOUSEBUTTONDOWN and show_image:
+        if event.type == pygame.MOUSEBUTTONDOWN: #and show_image:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
             # Kiểm tra nếu chuột nhấn vào nút đóng
                 if close_button.collidepoint(mouse_x, mouse_y):
                     show_image = False  # Ẩn hình ảnh
                     win_sound.stop()
+
     screen.fill((0, 0, 0))
 
     show_outcome = False  # Biến điều kiện để hiển thị thông báo
@@ -558,6 +644,11 @@ while True:
         auto_move_index += 1  # Move to the next step
         AI_step += 1  # Increment AI_step for each move
         pygame.time.delay(100)  # Delay of 0.1 seconds (100 milliseconds)
+
+        if auto_move_index >= len(auto_move_path):
+            ai_completed = True 
+            auto_move_path = None
+
 
     screen.blit(background_image, (0, 0))
 
@@ -611,6 +702,8 @@ while True:
     draw_rounded_button(button_dfs, "DFS", Colors.DARK_BLUE, 36)
     draw_rounded_button(button_exit, "Exit", Colors.DARK_BLUE, 36)
     draw_rounded_button(button_A, "A*", Colors.DARK_BLUE, 36)
+    draw_rounded_button(button_backtracking, "Backtracking", Colors.DARK_BLUE, 36)
+
     # Hiển thị thông báo hoàn thành
     font = pygame.font.Font(None, 36)
     game_completed = False
@@ -620,33 +713,32 @@ while True:
     
     # Hiển thị hướng dẫn
     
-    if AI_step > 0 and player_step_counter > 0:
+    if ai_completed and player_step_counter > 0:
         if AI_step + (maze_size * 0.2) > player_step_counter:
             outcome_text = "YOU WIN!!!"
         elif AI_step + (maze_size * 0.2) < player_step_counter:
             outcome_text = "YOU LOSE!!!"
         else:
             outcome_text = "DRAW!!!"
+
+        if outcome_text == "YOU WIN!!!" and show_image:
+            screen.blit(win_imagee, (screen_width // 2 - win_image.get_width() // 2,
+                                    screen_height // 2 - win_image.get_height() // 2))
+            pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
+            close_text = font.render("X", True, (255, 255, 255))
+            screen.blit(close_text, (close_button.x + 5, close_button.y))
+        elif outcome_text == "YOU LOSE!!!" and show_image:
+                screen.blit(lose_image, (screen_width // 2 - lose_image.get_width() // 2,
+                                        screen_height // 2 - lose_image.get_height() // 2))
+                pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
+                close_text = font.render("X", True, (255, 255, 255))
+                screen.blit(close_text, (close_button.x + 5, close_button.y))
+
     elif AI_step == 0 and player_step_counter > 0:
         outcome_text = "CHOOSE AI ALGORITHM"
     elif AI_step == 0 and player_step_counter == 0:
         outcome_text = "IT'S YOUR TURN"
     thongbao(outcome_text)
-
-
-    if game_completed and show_image:
-        # Phát âm thanh một lần duy nhất
-        if not sound_played:
-            win_sound.play()
-            sound_played = True
-        
-        # Hiển thị hình ảnh ở giữa màn hình
-        screen.blit(win_image, (screen_width // 2 - win_image.get_width() // 2,
-                                screen_height // 2 - win_image.get_height() // 2))
-
-        pygame.draw.rect(screen, (255, 0, 0), close_button)  # Vẽ nút đỏ
-        close_text = font.render("X", True, (255, 255, 255))
-        screen.blit(close_text, (close_button.x + 5, close_button.y))
 
        
     # Cập nhật màn hình
