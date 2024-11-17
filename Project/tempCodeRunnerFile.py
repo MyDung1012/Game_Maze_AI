@@ -9,35 +9,30 @@ import heapq  # Use heapq for priority queue
 
 # Khởi tạo Pygame
 pygame.init()
-# Kích thước màn hình và thiết lập chế độ toàn màn hình
+
+# Kích thước màn hình
 info = pygame.display.Info()
 screen_width, screen_height = info.current_w, info.current_h
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+maze_width = screen_width * 2 // 3  # Mê cung chiếm 2/3 màn hình bên trái
 
-# Thiết lập kích thước mê cung (chiếm 2/3 chiều rộng màn hình bên trái)
-maze_width = screen_width * 2 // 3
-
-# Âm thanh nền
+#âm thanh 
 pygame.mixer.music.load('Sound/8bit.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play()
-
-# Đọc kích thước mê cung từ file 'difficulty.txt'
 try:
     with open('difficulty.txt', 'r') as f:
         maze_size = int(f.read().strip())
 except (FileNotFoundError, ValueError) as e:
     print(f"Error reading difficulty: {e}")
-    maze_size = 10  # Kích thước mặc định nếu có lỗi
+    maze_size = 10  # Default size
 
-# Tải hình ảnh hoàn thành và âm thanh hoàn thành
-win_image = pygame.image.load("Image/Done.jpg")
+# Tải hình ảnh và âm thanh complete
+win_image = pygame.image.load("Image/Done.jpg") 
 win_image = pygame.transform.scale(win_image, (600, 450))
 win_sound = pygame.mixer.Sound("Sound/happy.mp3")
-
-# Vị trí của nút đóng
 close_button = pygame.Rect(screen_width // 2 + win_image.get_width() // 2 - 30,
-                           screen_height // 2 - win_image.get_height() // 2, 30, 30)
+                                   screen_height // 2 - win_image.get_height() // 2, 30, 30)
 
 # Tải hình ảnh kết quả
 win_imagee = pygame.image.load("Image/win.jpg")
@@ -55,14 +50,15 @@ try:
 except (FileNotFoundError, SyntaxError) as e:
     print(f"Error loading maze file: {e}")
     sys.exit()
-
-# Tính kích thước của từng ô trong mê cung
-cell_width = maze_width // len(maze_matrix[0])  # Chiều rộng của ô
-cell_height = screen_height // len(maze_matrix)  # Chiều cao của ô
-
-# Tải và scale hình nền theo kích thước màn hình
+# Kích thước của từng ô trong mê cung
+cell_width = maze_width // len(maze_matrix[0])  # Tính kích thước ô dựa trên chiều rộng mê cung
+cell_height = screen_height // len(maze_matrix)
 try:
-    background_image = pygame.image.load('Image/bgbg.jpg')
+    # Lấy kích thước màn hình từ pygame display surface
+    screen_width, screen_height = pygame.display.get_surface().get_size()
+    
+    # Tải và scale hình nền trực tiếp theo kích thước màn hình
+    background_image = pygame.image.load('Image/ground.jpg')
     background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 except pygame.error as e:
     print(f"Error loading background image: {e}")
@@ -70,7 +66,7 @@ except pygame.error as e:
 
 # Tải hình ảnh đường đi
 try:
-    path_image = pygame.image.load('Image/blockk.png')  # Đường đi sẽ sử dụng hình ảnh này
+    path_image = pygame.image.load('Image/gray-wall.jpg')  # Đường đi sẽ sử dụng hình ảnh này
     path_image = pygame.transform.scale(path_image, (cell_width, cell_height))  # Điều chỉnh kích thước hình ảnh đường đi
 except pygame.error as e:
     print(f"Error loading path image: {e}")
@@ -114,53 +110,27 @@ class Maze:
         self.matrix = matrix
 
     def draw(self, surface):
-        # Vẽ các ô của mê cung và viền bao quanh các ô tường
         for row in range(len(self.matrix)):
             for col in range(len(self.matrix[row])):
-                x, y = col * cell_width, row * cell_height
-                if self.matrix[row][col] == 1:
+                x = col * cell_width
+                y = row * cell_height
+                if self.matrix[row][col] == 0: #sua gia tri duong di o day
+                    # Không vẽ gì cho ô 1 (tường), chỉ vẽ viền vàng
+                    self.draw_borders(surface, row, col, x, y)
+                else:
+                    # Vẽ đường đi bằng hình ảnh đường đi
                     surface.blit(path_image, (x, y))
-                    self.draw_wall_border(surface, row, col)
 
-        # Vẽ viền bao quanh toàn bộ mê cung
-        self.draw_stylized_border(surface)
-
-    def draw_wall_border(self, surface, row, col):
-    # Xác định tọa độ và màu viền
-        x, y = col * cell_width, row * cell_height
-        outer_border_color = (186, 85, 211)  # Màu tím thanh nhạt cho lớp bóng ngoài
-        inner_border_color = (255, 250, 150)  # Màu xanh ngọc cho lớp viền trong
-
-    # Vẽ viền xung quanh ô tường nếu tiếp giáp với ô đường đi
-        adjacent = [
-            ((x, y), (x + cell_width, y), row > 0 and self.matrix[row - 1][col] == 0),            # Cạnh trên
-            ((x, y + cell_height), (x + cell_width, y + cell_height), row < len(self.matrix) - 1 and self.matrix[row + 1][col] == 0),  # Cạnh dưới
-            ((x, y), (x, y + cell_height), col > 0 and self.matrix[row][col - 1] == 0),           # Cạnh trái
-            ((x + cell_width, y), (x + cell_width, y + cell_height), col < len(self.matrix[0]) - 1 and self.matrix[row][col + 1] == 0)  # Cạnh phải
-    ]
-
-        for start, end, condition in adjacent:
-            if condition:
-            # Vẽ lớp bóng tím bên ngoài, mỏng và sát với lớp bên trong
-                pygame.draw.line(surface, outer_border_color, (start[0] - 1, start[1] - 1), (end[0] - 1, end[1] - 1), 3)
-            # Vẽ lớp viền xanh ngọc bên trong, mỏng hơn và gần lớp bóng
-                pygame.draw.line(surface, inner_border_color, start, end, 2)
-
-    def draw_stylized_border(self, surface):
-        maze_width = len(self.matrix[0]) * cell_width
-        maze_height = len(self.matrix) * cell_height
-        corner_size = 10  # Tăng bán kính bo tròn cho góc mềm mại hơn
-
-        # Các lớp viền ngoài
-        layers = [
-            ((186, 85, 211), 6),  # Lớp bóng tím nhạt ngoài cùng
-            ((64, 224, 208), 3)   # Lớp viền xanh ngọc bên trong
-        ]
-
-        # Vẽ từng lớp viền ngoài với hiệu ứng nổi
-        for i, (color, thickness) in enumerate(layers):
-            offset = i * 1  # Khoảng cách dịch chuyển mỗi lớp vào trong để tạo hiệu ứng nổi
-            pygame.draw.rect(surface, color, (offset, offset, maze_width - 1 * offset, maze_height - 1 * offset), thickness, border_radius=corner_size)
+    def draw_borders(self, surface, row, col, x, y):
+        # Vẽ viền xung quanh nếu ô hiện tại là ô ngoài cùng
+        if row == 0:  # Viền trên cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x + cell_width, y), 2)
+        if row == maze_size - 1:  # Viền dưới cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x, y + cell_height), (x + cell_width, y + cell_height), 2)
+        if col == 0:  # Viền trái cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x, y), (x, y + cell_height), 2)
+        if col == maze_size - 1:  # Viền phải cùng
+            pygame.draw.line(surface, Colors.YELLOW, (x + cell_width, y), (x + cell_width, y + cell_height), 2)
 
 
 # Tạo danh sách hành tinh
@@ -423,24 +393,6 @@ def solve_maze_astar(maze, start, goal):
     
     return None  # Không tìm thấy đường đi
 
-def draw_rounded_button(button_rect, text, color, font_size, border_color_outer=(186, 85, 211), border_color_inner=(255, 215, 0), border_thickness=3, radius=0, offset_x=-40):
-    # Điều chỉnh vị trí của nút bằng cách dịch sang trái `offset_x` pixel
-    adjusted_rect = button_rect.move(offset_x, 0)
-    
-    # Vẽ viền ngoài màu tím
-    pygame.draw.rect(screen, border_color_outer, adjusted_rect, border_thickness + 2, border_radius=radius)
-    
-    # Vẽ viền trong màu vàng
-    pygame.draw.rect(screen, border_color_inner, adjusted_rect.inflate(-border_thickness * 2, -border_thickness * 2), border_thickness, border_radius=radius)
-    
-    # Vẽ nền nút bên trong
-    pygame.draw.rect(screen, color, adjusted_rect.inflate(-border_thickness * 4, -border_thickness * 4), border_radius=radius)
-    
-    # Vẽ chữ trên nút
-    font = pygame.font.Font("Font/Jomplang-6Y3Jo.ttf", font_size)
-    label = font.render(text, True, Colors.WHITE)
-    screen.blit(label, label.get_rect(center=adjusted_rect.center))
-
 def solve_backtracking(maze, start, goal):
     directions = [
         (-1, 0),  # lên
@@ -503,6 +455,14 @@ def solve_backtracking(maze, start, goal):
         return None  # Không tìm thấy đường đi
 
 
+def draw_rounded_button(button_rect, text, color, font_size,  radius=15):
+    # Vẽ nền nút với bo góc
+    pygame.draw.rect(screen, color, button_rect, border_radius=radius)
+    font = pygame.font.Font("Font/Jomplang-6Y3Jo.ttf", font_size)
+    label = font.render(text, True, Colors.WHITE)
+    text_rect = label.get_rect(center=button_rect.center)
+    screen.blit(label, text_rect)
+
 def display_outcome_box(text):
     # Vị trí và kích thước của bảng thông báo
     box_width, box_height = 400, 200
@@ -525,7 +485,6 @@ button_bfs = pygame.Rect(screen_width - 220, screen_height - 320, 200, 60)
 button_A = pygame.Rect(screen_width - 220, screen_height - 240, 200, 60)
 button_home = pygame.Rect(screen_width - 220, screen_height - 160, 200, 60)
 button_exit = pygame.Rect(screen_width - 220, screen_height - 80, 200, 60)
-
 
 # Add after maze initialization
 player = Player(0, 0)  # Changed from Player(1, 1)
