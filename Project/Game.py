@@ -4,17 +4,14 @@ import sys
 from Colors import Colors
 from enum import Enum
 import json
-from collections import deque  # For BFS
-import heapq  # Use heapq for priority queue
+from collections import deque 
+import heapq  
 
-# Khởi tạo Pygame
 pygame.init()
-# Kích thước màn hình và thiết lập chế độ toàn màn hình
 info = pygame.display.Info()
 screen_width, screen_height = info.current_w, info.current_h
 screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
 
-# Thiết lập kích thước mê cung (chiếm 2/3 chiều rộng màn hình bên trái)
 maze_width = screen_width * 2 // 3
 
 # Âm thanh nền
@@ -22,33 +19,36 @@ pygame.mixer.music.load('Sound/8bit.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play()
 
-# Đọc kích thước mê cung từ file 'difficulty.txt'
+initial_depth_limits = [18, 38, 58, 94, 106, 136, 164, 222, 178, 260]
 try:
     with open('difficulty.txt', 'r') as f:
         maze_size = int(f.read().strip())
+        # Kiểm tra maze_size nằm trong khoảng 10, 20, ..., 100
+        if maze_size in range(10, 101, 10):  # Kiểm tra xem maze_size có phải bội số của 10 từ 10 đến 100
+            index = maze_size // 10 - 1  # Tính chỉ số tương ứng
+            initial_depth_limit = initial_depth_limits[index]
+        else:
+            initial_depth_limit = 100  # Giá trị mặc định nếu maze_size ngoài phạm vi
 except (FileNotFoundError, ValueError) as e:
     print(f"Error reading difficulty: {e}")
-    maze_size = 10  # Kích thước mặc định nếu có lỗi
+    initial_depth_limit = 100  # Giá trị mặc định nếu gặp lỗi
 
-# Tải hình ảnh hoàn thành và âm thanh hoàn thành
+
+
 win_image = pygame.image.load("Image/Done.jpg")
 win_image = pygame.transform.scale(win_image, (600, 450))
 win_sound = pygame.mixer.Sound("Sound/happy.mp3")
 
-# Vị trí của nút đóng
 close_button = pygame.Rect(screen_width // 2 + win_image.get_width() // 2 - 30,
                            screen_height // 2 - win_image.get_height() // 2, 30, 30)
 
-# Tải hình ảnh kết quả
 win_imagee = pygame.image.load("Image/win.jpg")
 lose_image = pygame.image.load("Image/lose.jpg")
 
-# Điều chỉnh kích thước hình ảnh nếu cần
 win_image = pygame.transform.scale(win_imagee, (600, 450))
 lose_image = pygame.transform.scale(lose_image, (600, 450))
 
 
-# Load maze matrix
 try:
     with open(f"Maze/{maze_size}.txt", "r") as f:
         maze_matrix = json.load(f)
@@ -56,11 +56,9 @@ except (FileNotFoundError, SyntaxError) as e:
     print(f"Error loading maze file: {e}")
     sys.exit()
 
-# Tính kích thước của từng ô trong mê cung
-cell_width = maze_width // len(maze_matrix[0])  # Chiều rộng của ô
-cell_height = screen_height // len(maze_matrix)  # Chiều cao của ô
+cell_width = maze_width // len(maze_matrix[0])
+cell_height = screen_height // len(maze_matrix) 
 
-# Tải và scale hình nền theo kích thước màn hình
 try:
     background_image = pygame.image.load('Image/bgbg.jpg')
     background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
@@ -68,35 +66,32 @@ except pygame.error as e:
     print(f"Error loading background image: {e}")
     sys.exit()
 
-# Tải hình ảnh đường đi
 try:
-    path_image = pygame.image.load('Image/blockk.png')  # Đường đi sẽ sử dụng hình ảnh này
-    path_image = pygame.transform.scale(path_image, (cell_width, cell_height))  # Điều chỉnh kích thước hình ảnh đường đi
+    path_image = pygame.image.load('Image/blockk.png') 
+    path_image = pygame.transform.scale(path_image, (cell_width, cell_height))
 except pygame.error as e:
     print(f"Error loading path image: {e}")
     sys.exit()
 
 goal_image = pygame.image.load('Image/moon.png')
-goal_image = pygame.transform.scale(goal_image, (cell_width, cell_height))  # Resize to cell dimensions
+goal_image = pygame.transform.scale(goal_image, (cell_width, cell_height))
 goal_rect = goal_image.get_rect()
-# Hình ảnh hành tinh
 try:
     planet_images = [
-        pygame.image.load('Image/planet1.png'),  # Hành tinh 1
-        pygame.image.load('Image/planet2.png'),  # Hành tinh 2
-        pygame.image.load('Image/planet3.png')   # Hành tinh 3
+        pygame.image.load('Image/planet1.png'), 
+        pygame.image.load('Image/planet2.png'), 
+        pygame.image.load('Image/planet3.png')  
     ]
 except pygame.error as e:
     print(f"Error loading planet images: {e}")
     sys.exit()
 
-# Lớp Hành tinh
 class Planet:
     def __init__(self, image, x, y):
-        self.image = pygame.transform.scale(image, (85, 64))  # Điều chỉnh kích thước
+        self.image = pygame.transform.scale(image, (85, 64)) 
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = random.randint(1, 5)
-        self.direction = random.choice([-1, 1])  # Di chuyển trái hoặc phải
+        self.direction = random.choice([-1, 1])
 
     def update(self):
         self.rect.x += self.speed * self.direction
@@ -108,13 +103,11 @@ class Planet:
     def draw(self, surface):
         surface.blit(self.image, self.rect)
 
-# Lớp Mê cung
 class Maze:
     def __init__(self, matrix):
         self.matrix = matrix
 
     def draw(self, surface):
-        # Vẽ các ô của mê cung và viền bao quanh các ô tường
         for row in range(len(self.matrix)):
             for col in range(len(self.matrix[row])):
                 x, y = col * cell_width, row * cell_height
@@ -122,64 +115,55 @@ class Maze:
                     surface.blit(path_image, (x, y))
                     self.draw_wall_border(surface, row, col)
 
-        # Vẽ viền bao quanh toàn bộ mê cung
         self.draw_stylized_border(surface)
 
     def draw_wall_border(self, surface, row, col):
-    # Xác định tọa độ và màu viền
         x, y = col * cell_width, row * cell_height
-        outer_border_color = (186, 85, 211)  # Màu tím thanh nhạt cho lớp bóng ngoài
-        inner_border_color = (255, 250, 150)  # Màu xanh ngọc cho lớp viền trong
+        outer_border_color = (186, 85, 211) 
+        inner_border_color = (255, 250, 150) 
 
-    # Vẽ viền xung quanh ô tường nếu tiếp giáp với ô đường đi
         adjacent = [
-            ((x, y), (x + cell_width, y), row > 0 and self.matrix[row - 1][col] == 0),            # Cạnh trên
+            ((x, y), (x + cell_width, y), row > 0 and self.matrix[row - 1][col] == 0),          
             ((x, y + cell_height), (x + cell_width, y + cell_height), row < len(self.matrix) - 1 and self.matrix[row + 1][col] == 0),  # Cạnh dưới
-            ((x, y), (x, y + cell_height), col > 0 and self.matrix[row][col - 1] == 0),           # Cạnh trái
+            ((x, y), (x, y + cell_height), col > 0 and self.matrix[row][col - 1] == 0),        
             ((x + cell_width, y), (x + cell_width, y + cell_height), col < len(self.matrix[0]) - 1 and self.matrix[row][col + 1] == 0)  # Cạnh phải
     ]
 
         for start, end, condition in adjacent:
             if condition:
-            # Vẽ lớp bóng tím bên ngoài, mỏng và sát với lớp bên trong
                 pygame.draw.line(surface, outer_border_color, (start[0] - 1, start[1] - 1), (end[0] - 1, end[1] - 1), 3)
-            # Vẽ lớp viền xanh ngọc bên trong, mỏng hơn và gần lớp bóng
                 pygame.draw.line(surface, inner_border_color, start, end, 2)
 
     def draw_stylized_border(self, surface):
         maze_width = len(self.matrix[0]) * cell_width
         maze_height = len(self.matrix) * cell_height
-        corner_size = 10  # Tăng bán kính bo tròn cho góc mềm mại hơn
+        corner_size = 10 
 
-        # Các lớp viền ngoài
         layers = [
-            ((186, 85, 211), 6),  # Lớp bóng tím nhạt ngoài cùng
-            ((64, 224, 208), 3)   # Lớp viền xanh ngọc bên trong
+            ((186, 85, 211), 6),  
+            ((64, 224, 208), 3)  
         ]
 
-        # Vẽ từng lớp viền ngoài với hiệu ứng nổi
         for i, (color, thickness) in enumerate(layers):
-            offset = i * 1  # Khoảng cách dịch chuyển mỗi lớp vào trong để tạo hiệu ứng nổi
+            offset = i * 1 
             pygame.draw.rect(surface, color, (offset, offset, maze_width - 1 * offset, maze_height - 1 * offset), thickness, border_radius=corner_size)
 
 
-# Tạo danh sách hành tinh
 planets = [Planet(planet_images[i], random.randint(0, screen_width), random.randint(0, screen_height - 50)) for i in range(3)]
 
-# Khởi tạo mê cung
 maze = Maze(maze_matrix)
 
 class Player:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.original_image = pygame.image.load('Image/rocket.png')# (Khai báo hình ảnh ban đầu ở đây, ví dụ: pygame.image.load("path/to/image.png"))
+        self.original_image = pygame.image.load('Image/rocket.png')
         self.image = self.original_image
         self.reset_position()
-        self.game_completed = False  # Trạng thái game đã hoàn thành
+        self.game_completed = False 
         try:
             self.original_image = pygame.transform.scale(self.original_image, (cell_width, cell_height))
-            self.image = self.original_image  # Hình ảnh hiện tại
+            self.image = self.original_image
         except pygame.error as e:
             print(f"Error loading rocket image: {e}")
             sys.exit()
@@ -187,11 +171,11 @@ class Player:
     def reset_position(self):
         self.row = 0
         self.col = 0
-        self.game_completed = False  # Reset trạng thái game khi restart
-        self.image = self.original_image  # Đặt lại hình ảnh ban đầu
+        self.game_completed = False 
+        self.image = self.original_image
     
     def is_at_goal(self):
-        return self.row == maze_size - 1 and self.col == maze_size - 1  # Kiểm tra vị trí đích
+        return self.row == maze_size - 1 and self.col == maze_size - 1 
     
     def reset_game(self):
         global game_completed, sound_played, show_image, player_step_counter
@@ -202,19 +186,16 @@ class Player:
         player.reset_position()
 
     def move(self, direction, maze_matrix):
-        # Nếu game đã hoàn thành, không cho phép di chuyển
         if self.game_completed:
             return False
             
         new_row = self.row + direction[0]
         new_col = self.col + direction[1]
         
-        # Kiểm tra tọa độ mới có hợp lệ và là đường đi hay không
         if (0 <= new_row < len(maze_matrix) and 
             0 <= new_col < len(maze_matrix[0]) and 
             maze_matrix[new_row][new_col] == 0):
             
-            # Xác định góc xoay dựa trên hướng di chuyển
             if direction == (-1, 0):  # lên
                 self.image = pygame.transform.rotate(self.original_image, 0)
             elif direction == (1, 0):  # xuống
@@ -232,11 +213,9 @@ class Player:
             elif direction == (1, 1): # xéo phải xuống
                 self.image = pygame.transform.rotate(self.original_image, -135)
                 
-            # Cập nhật vị trí
             self.row = new_row
             self.col = new_col
 
-            # Kiểm tra xem người chơi đã đến đích chưa
             if self.is_at_goal():
                 self.game_completed = True
             return True
@@ -245,12 +224,10 @@ class Player:
     def draw(self, surface):
         x = self.col * cell_width
         y = self.row * cell_height
-        # Vẽ hình ảnh tên lửa tại vị trí trung tâm của ô hiện tại
         surface.blit(self.image, (x + (cell_width - self.image.get_width()) // 2, 
                                   y + (cell_height - self.image.get_height()) // 2))
 
 def solve_maze_bfs(maze, start, goal):
-    # 8 hướng di chuyển: trên, dưới, trái, phải, và 4 hướng chéo
     directions = [
         (-1, 0),  # lên
         (1, 0),   # xuống
@@ -265,7 +242,6 @@ def solve_maze_bfs(maze, start, goal):
     rows = len(maze)
     cols = len(maze[0])
     
-    # Khởi tạo queue và visited set
     queue = deque([(start)])
     visited = {start}
     
@@ -359,7 +335,6 @@ def heuristic(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 def solve_maze_astar(maze, start, goal):
-    # 8 hướng di chuyển: trên, dưới, trái, phải, và 4 hướng chéo
     directions = [
         (-1, 0),  # lên
         (1, 0),   # xuống
@@ -441,66 +416,96 @@ def draw_rounded_button(button_rect, text, color, font_size, border_color_outer=
     label = font.render(text, True, Colors.WHITE)
     screen.blit(label, label.get_rect(center=adjusted_rect.center))
 
-def solve_backtracking(maze, start, goal):
+
+def solve_backtracking(maze, start, goal, initial_depth_limit):
+    # Directions for movement
     directions = [
-        (-1, 0),  # lên
-        (1, 0),   # xuống
-        (0, -1),  # trái
-        (0, 1),   # phải
-        (-1, -1), # trên-trái
-        (-1, 1),  # trên-phải
-        (1, -1),  # dưới-trái
-        (1, 1)    # dưới-phải
+        (-1, 0),  # up
+        (1, 0),   # down
+        (0, -1),  # left
+        (0, 1),   # right
+        #(-1, -1), # up-left
+        #(-1, 1),  # up-right
+        #(1, -1),  # down-left
+        #(1, 1)    # down-right
     ]
     
+    # Initialize depth limits and constraints for recursion
+    depth_limit = initial_depth_limit
+    max_depth_limit = 1000
+    max_backtracks = 10000
+    stepIDS = 50
+
+    # Heuristic function to estimate distance to the goal
     def heuristic(cell):
         return abs(cell[0] - goal[0]) + abs(cell[1] - goal[1])
 
-    # Lưu vị trí đã ghé qua để tránh lặp lại
-    visited = set()
-    # Cache để lưu lại các đường cụt
-    failed_paths = set()
+    path = []  # To store the current path
 
-    path = []
+    # Simplified AC-3 for debugging
+    def ac3_constraints(current):
+        # Just return True for debugging to bypass constraints
+        return True
 
-    def backtrack(current):
-        # Nếu đã đến đích, trả về True
+    # Main backtracking function with depth and backtrack limits
+    def backtrack(current, depth, visited, backtracks):
+        # Debug: Print current position and depth
+        print(f"Visiting {current}, depth {depth}, backtracks {backtracks}")
+
+        # Check if we've exceeded the depth or backtrack limits
+        if depth > depth_limit or backtracks >= max_backtracks:
+            print(f"Depth or backtrack limit reached at {current}")
+            return False
+
+        # Check if we reached the goal
         if current == goal:
+            print("Goal reached!")
             return True
 
-        # Đánh dấu vị trí đã thăm
         visited.add(current)
-
-        # Sắp xếp các hướng đi theo khoảng cách tới đích
+        
+        # Sort directions based on distance to goal
         sorted_directions = sorted(directions, key=lambda d: heuristic((current[0] + d[0], current[1] + d[1])))
 
         for direction in sorted_directions:
             next_cell = (current[0] + direction[0], current[1] + direction[1])
 
-            # Kiểm tra tính hợp lệ của ô tiếp theo
-            if (0 <= next_cell[0] < len(maze) and 0 <= next_cell[1] < len(maze[0]) and
-                    maze[next_cell[0]][next_cell[1]] == 0 and next_cell not in visited):
+            # Check validity of the next cell
+            if (0 <= next_cell[0] < len(maze) and 
+                0 <= next_cell[1] < len(maze[0]) and 
+                maze[next_cell[0]][next_cell[1]] == 0 and 
+                next_cell not in visited):
 
-                # Thêm bước đi vào đường đi
-                path.append(direction)
-                
-                # Nếu tìm được đường đi đến đích, kết thúc
-                if backtrack(next_cell):
-                    return True
+                # Apply simplified AC-3 constraint for debugging
+                if ac3_constraints(next_cell):
+                    path.append(direction)
+                    
+                    # Recur with updated depth and backtrack count
+                    if backtrack(next_cell, depth + 1, visited, backtracks):
+                        return True
 
-                # Quay lui nếu không tìm được đường đi
-                path.pop()
+                    # Backtrack if the current path doesn't lead to a solution
+                    path.pop()
+                    backtracks += 1  # Increase backtrack count after unsuccessful attempt
 
-        # Đánh dấu đường cụt để tránh đi lại lần nữa
-        visited.remove(current)
-        failed_paths.add(current)
+        visited.remove(current)  # Clean up visited for this path
         return False
 
-    # Chạy backtracking từ điểm bắt đầu
-    if backtrack(start):
-        return path  # Trả về danh sách các bước di chuyển
-    else:
-        return None  # Không tìm thấy đường đi
+    # Iteratively increase depth limit if no solution found
+    while depth_limit <= max_depth_limit:
+        print(f"Trying depth limit {depth_limit}")
+        visited = set()  # Reset visited set for each new depth limit attempt
+        if backtrack(start, 0, visited, 0):
+            print("Path found!")
+            return path  # Return the successful path
+        else:
+            print("No path found, increasing depth limit")
+            depth_limit += stepIDS  # Increment depth limit for iterative deepening
+
+    print("No solution found within depth and backtrack limits.")
+    return None  # Return None if no path is found
+
+
 
 
 def display_outcome_box(text):
@@ -554,7 +559,9 @@ def thongbao(outcome_text):
     instructions_win_rect.topleft = (screen_width - 300, 250)
     screen.blit(instructions_win, instructions_win_rect)
 
-  # Thời gian bắt đầu hiển thị thông báo
+  # Thời gian bắt đầu hiển thị thông báo\
+
+
 
 # Vòng lặp chính
 while True:
@@ -618,7 +625,7 @@ while True:
             elif button_backtracking.collidepoint(event.pos):
                 player.reset_position()
                 AI_step = 0
-                auto_move_path = solve_backtracking(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
+                auto_move_path = solve_backtracking(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1), initial_depth_limit )
                 auto_move_index = 0
                 print("Backtracking with AC3 button clicked")
             elif button_exit.collidepoint(event.pos):
