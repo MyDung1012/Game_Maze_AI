@@ -507,6 +507,14 @@ def solve_backtracking(maze, start, goal, initial_depth_limit):
 
 
 
+button_reset = pygame.Rect(screen_width - 220, screen_height - 560, 200, 60)
+button_backtracking = pygame.Rect(screen_width - 220, screen_height - 480, 200, 60) 
+button_dfs = pygame.Rect(screen_width - 220, screen_height - 400, 200, 60)
+button_bfs = pygame.Rect(screen_width - 220, screen_height - 320, 200, 60)
+button_A = pygame.Rect(screen_width - 220, screen_height - 240, 200, 60)
+button_home = pygame.Rect(screen_width - 220, screen_height - 160, 200, 60)
+button_exit = pygame.Rect(screen_width - 220, screen_height - 80, 200, 60)
+
 
 def display_outcome_box(text):
     # Vị trí và kích thước của bảng thông báo
@@ -522,15 +530,11 @@ def display_outcome_box(text):
     text_surface = font.render(text, True, (255, 255, 255))
     text_rect = text_surface.get_rect(center=(screen_width // 2, screen_height // 2))
     screen.blit(text_surface, text_rect)
-
-button_reset = pygame.Rect(screen_width - 220, screen_height - 560, 200, 60)
-button_backtracking = pygame.Rect(screen_width - 220, screen_height - 480, 200, 60) 
-button_dfs = pygame.Rect(screen_width - 220, screen_height - 400, 200, 60)
-button_bfs = pygame.Rect(screen_width - 220, screen_height - 320, 200, 60)
-button_A = pygame.Rect(screen_width - 220, screen_height - 240, 200, 60)
-button_home = pygame.Rect(screen_width - 220, screen_height - 160, 200, 60)
-button_exit = pygame.Rect(screen_width - 220, screen_height - 80, 200, 60)
-
+def thongbao(outcome_text):
+    instructions_win = font.render(outcome_text, True, Colors.WHITE)
+    instructions_win_rect = instructions_win.get_rect()
+    instructions_win_rect.topleft = (screen_width - 300, 250)
+    screen.blit(instructions_win, instructions_win_rect)
 
 # Add after maze initialization
 player = Player(0, 0)  # Changed from Player(1, 1)
@@ -553,11 +557,7 @@ game_completed = True
 sound_played = False  # Biến để kiểm soát việc phát âm thanh
 show_image = True
 ai_completed = False
-def thongbao(outcome_text):
-    instructions_win = font.render(outcome_text, True, Colors.WHITE)
-    instructions_win_rect = instructions_win.get_rect()
-    instructions_win_rect.topleft = (screen_width - 300, 250)
-    screen.blit(instructions_win, instructions_win_rect)
+
 
   # Thời gian bắt đầu hiển thị thông báo\
 
