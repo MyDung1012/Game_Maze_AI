@@ -19,10 +19,10 @@ pygame.mixer.music.load('Sound/8bit.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play()
 
-<<<<<<< HEAD
+
 with open('difficulty.txt', 'r') as f:
     maze_size = int(f.read().strip())
-=======
+
 initial_depth_limits = [18, 38, 58, 94, 106, 136, 164, 222, 178, 260]
 try:
     with open('difficulty.txt', 'r') as f:
@@ -38,7 +38,6 @@ except (FileNotFoundError, ValueError) as e:
     initial_depth_limit = 100  # Giá trị mặc định nếu gặp lỗi
 
 
->>>>>>> 6cb67b9281955c7d00e829eb119fca6248729828
 
 win_image = pygame.image.load("Image/win.jpg")
 win_image = pygame.transform.scale(win_image, (600, 450))
@@ -217,9 +216,57 @@ class Player:
         surface.blit(self.image, (x + (cell_width - self.image.get_width()) // 2, 
                                   y + (cell_height - self.image.get_height()) // 2))
 
-<<<<<<< HEAD
-def solve_maze_bfs(maze, start, goal): 
-=======
+def solve_maze_bfs(maze, start, goal):
+    directions = [
+        (-1, 0),  # lên
+        (1, 0),   # xuống
+        (0, -1),  # trái
+        (0, 1),   # phải
+        (-1, -1), # trên-trái
+        (-1, 1),  # trên-phải
+        (1, -1),  # dưới-trái
+        (1, 1)    # dưới-phải
+    ]
+    
+    rows = len(maze)
+    cols = len(maze[0])
+    
+    queue = deque([(start)])
+    visited = {start}
+    
+    # Dictionary lưu đường đi
+    came_from = {}
+    
+    while queue:
+        current = queue.popleft()
+        
+        if current == goal:
+            # Tái tạo đường đi
+            path = []
+            while current in came_from:
+                prev = came_from[current]
+                path.append((current[0] - prev[0], current[1] - prev[1]))
+                current = prev
+            path.reverse()
+            return path
+            
+        # Kiểm tra tất cả các hướng có thể đi
+        for dx, dy in directions:
+            next_row = current[0] + dx
+            next_col = current[1] + dy
+            neighbor = (next_row, next_col)
+            
+            # Kiểm tra điều kiện hợp lệ
+            if (0 <= next_row < rows and 
+                0 <= next_col < cols and 
+                maze[next_row][next_col] == 0 and  # 0 là đường đi
+                neighbor not in visited):
+                
+                queue.append(neighbor)
+                visited.add(neighbor)
+                came_from[neighbor] = current
+    
+    return None  # Không tìm thấy đường đi
 
 def reset_game():
     global player_step_counter, AI_step, keys, collected_keys, algorithm_selected, game_over, player_won, ai_active, start_time
@@ -260,8 +307,7 @@ def solve_maze_bfs(maze, start, goal):
         (1, -1),  # dưới-trái
         (1, 1)    # dưới-phải
     ]
-    
->>>>>>> 6cb67b9281955c7d00e829eb119fca6248729828
+
     rows = len(maze)
     cols = len(maze[0])
     
@@ -421,10 +467,7 @@ def draw_rounded_button(button_rect, text, color, font_size, border_color_outer=
     screen.blit(label, label.get_rect(center=adjusted_rect.center))
 
 
-<<<<<<< HEAD
-def solve_backtracking(maze, start, goal):
 
-=======
 def solve_backtracking(maze, start, goal, initial_depth_limit):
     # Directions for movement
     directions = [
@@ -438,7 +481,7 @@ def solve_backtracking(maze, start, goal, initial_depth_limit):
         #(1, 1)    # down-right
     ]
     
->>>>>>> 6cb67b9281955c7d00e829eb119fca6248729828
+
     # Initialize depth limits and constraints for recursion
     depth_limit = 50  # Set a default depth limit
     max_depth_limit = 1000
@@ -625,10 +668,7 @@ def display_outcome_box(text):
     text_surface = font.render(text, True, (255, 255, 255))
     text_rect = text_surface.get_rect(center=(screen_width // 2, screen_height // 2))
     screen.blit(text_surface, text_rect)
-<<<<<<< HEAD
-=======
 
->>>>>>> 6cb67b9281955c7d00e829eb119fca6248729828
 def thongbao(outcome_text):
     instructions_win = font.render(outcome_text, True, Colors.WHITE)
     instructions_win_rect = instructions_win.get_rect()
@@ -636,9 +676,9 @@ def thongbao(outcome_text):
     screen.blit(instructions_win, instructions_win_rect)
 
 # Add after maze initialization
-<<<<<<< HEAD
+
 player = Player(0, 0)
-=======
+
 player = Player(0, 0)  # Changed from Player(1, 1)
 boat = Boat(maze_size - 1, 0)  # Vị trí bắt đầu của thuyền (phía dưới bên trái)
 
@@ -647,7 +687,7 @@ player_won = False
 algorithm_selected = None  # Biến để lưu thuật toán đã chọn
 start_time = pygame.time.get_ticks()  # Lưu thời gian bắt đầu trò chơi
 ai_active = False
->>>>>>> 6cb67b9281955c7d00e829eb119fca6248729828
+
 
 # Initialize auto_move_path, auto_move_index, and AI_step
 auto_move_path = None
@@ -712,30 +752,7 @@ while True:
                 print("Home button clicked")
                 pygame.mixer.music.stop()   
                 exec(open("Home.py", encoding="utf-8").read())
-            '''elif button_bfs.collidepoint(event.pos):
-                print("BFS button clicked")
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_maze_bfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-            elif button_A.collidepoint(event.pos):
-                print("A* button clicked")
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_maze_astar(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-            elif button_dfs.collidepoint(event.pos):
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_maze_dfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-                print("DFS button clicked")
-            elif button_backtracking.collidepoint(event.pos):
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_backtracking(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-                print("Backtracking with AC3 button clicked")'''
+
             if button_bfs.collidepoint(event.pos):
                 print("BFS button clicked")
                 algorithm_selected = "BFS"
@@ -765,9 +782,9 @@ while True:
     show_outcome = False  # Biến điều kiện để hiển thị thông báo
     outcome_time = 0
     # Check if it's time to move to the next step
-<<<<<<< HEAD
+
     auto_move_index = ai_move(auto_move_path, auto_move_index, maze_matrix)  # Call the new AI movement function
-=======
+
     if auto_move_path and auto_move_index < len(auto_move_path):
         direction = auto_move_path[auto_move_index]
         player.move(direction, maze_matrix)
@@ -808,7 +825,6 @@ while True:
 
 
 
->>>>>>> 6cb67b9281955c7d00e829eb119fca6248729828
 
     screen.blit(background_image, (0, 0))
     boat.draw(screen)

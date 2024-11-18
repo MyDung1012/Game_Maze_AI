@@ -10,7 +10,7 @@ import heapq
 pygame.init()
 info = pygame.display.Info()
 screen_width, screen_height = info.current_w, info.current_h
-screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 
 maze_width = screen_width * 2 // 3
 
@@ -35,7 +35,7 @@ except (FileNotFoundError, ValueError) as e:
 
 
 
-win_image = pygame.image.load("Image/Done.jpg")
+win_image = pygame.image.load("Image/win.jpg")
 win_image = pygame.transform.scale(win_image, (600, 450))
 win_sound = pygame.mixer.Sound("Sound/happy.mp3")
 
