@@ -34,7 +34,7 @@ except (FileNotFoundError, ValueError) as e:
 
 # Tải hình ảnh và âm thanh
 try:
-    win_image = pygame.image.load("Image/Done.jpg")
+    win_image = pygame.image.load("Image/win.jpg")
     win_image = pygame.transform.scale(win_image, (600, 450))
     win_sound = pygame.mixer.Sound("Sound/happy.mp3")
 

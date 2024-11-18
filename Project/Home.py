@@ -93,14 +93,6 @@ def draw_difficulty_slider(surface, x, y, width, height, min_value, max_value, c
     surface.blit(slider_image, (x, y))
     slider_x = x + int((current_value - min_value) / (max_value - min_value) * width)
     surface.blit(button_image, (slider_x - 10, y - 10))
-
-    # Kiểm tra xem current_value có hợp lệ không
-    '''if 1 <= current_value <= len(difficulty_images):
-        image = difficulty_images[current_value - 1]
-        surface.blit(image, (x + width + 20, y - 100))
-    else:
-        # Nếu không, có thể vẽ một hình ảnh mặc định hoặc không làm gì cả
-        print("Current value is out of range for difficulty images.")'''
     
     font = pygame.font.SysFont("timesnewroman", 20, bold=True)
     value_text = font.render(f"{current_value}", True, Colors.YELLOW)
