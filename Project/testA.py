@@ -229,7 +229,7 @@ class Player:
 
 
 def reset_game():
-    global player_step_counter, AI_step, keys, collected_keys, algorithm_selected, game_over, player_won, ai_active, start_time
+    global player_step_counter, AI_step, keys, collected_keys, algorithm_selected, game_over, player_won, ai_active, start_time, num_keys
 
     # Reset trạng thái người chơi
     player.reset_position()
@@ -241,9 +241,9 @@ def reset_game():
     boat.path_index = 0
 
     # Random lại keys
-    num_keys = random.randint(3, 5)
-    keys = generate_random_keys(maze_matrix, num_keys, key_image)
-    collected_keys = 0
+    num_keys = random.randint(3, 5)  # Reset số lượng keys ngẫu nhiên
+    keys = generate_random_keys(maze_matrix, num_keys, key_image)  # Reset danh sách keys
+    collected_keys = 0  # Reset số keys đã thu thập
 
     # Reset các biến trạng thái trò chơi
     AI_step = 0
@@ -723,30 +723,7 @@ while True:
                 print("Home button clicked")
                 pygame.mixer.music.stop()   
                 exec(open("Home.py", encoding="utf-8").read())
-            '''elif button_bfs.collidepoint(event.pos):
-                print("BFS button clicked")
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_maze_bfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-            elif button_A.collidepoint(event.pos):
-                print("A* button clicked")
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_maze_astar(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-            elif button_dfs.collidepoint(event.pos):
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_maze_dfs(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1))
-                auto_move_index = 0
-                print("DFS button clicked")
-            elif button_backtracking.collidepoint(event.pos):
-                player.reset_position()
-                AI_step = 0
-                auto_move_path = solve_backtracking(maze_matrix, (player.row, player.col), (maze_size - 1, maze_size - 1), initial_depth_limit )
-                auto_move_index = 0
-                print("Backtracking with AC3 button clicked")'''
+
             if button_bfs.collidepoint(event.pos):
                 print("BFS button clicked")
                 algorithm_selected = "BFS"
@@ -848,6 +825,7 @@ while True:
     border_thickness = 3  # Độ dày của viền
 
      # Textbox cho số keys đã thu thập
+    # Textbox cho số keys đã thu thập
     keys_textbox_rect = pygame.Rect(screen_width - 400, 60, textbox_width, textbox_height)
     pygame.draw.rect(screen, border_color, keys_textbox_rect, border_thickness)  # Vẽ viền
     pygame.draw.rect(screen, textbox_color, keys_textbox_rect.inflate(-border_thickness*2, -border_thickness*2))  # Vẽ nền
@@ -856,25 +834,6 @@ while True:
     keys_text = font.render(f"Keys: {collected_keys}/{num_keys}", True, Colors.WHITE)
     keys_text_rect = keys_text.get_rect(center=keys_textbox_rect.center)  # Canh giữa văn bản trong textbox
     screen.blit(keys_text, keys_text_rect)
-    # Textbox cho số bước của AI
-    '''ai_textbox_rect = pygame.Rect(screen_width - 400, 60, textbox_width, textbox_height)
-    pygame.draw.rect(screen, border_color, ai_textbox_rect, border_thickness)  # Vẽ viền
-    pygame.draw.rect(screen, textbox_color, ai_textbox_rect.inflate(-border_thickness*2, -border_thickness*2))  # Vẽ nền
-
-    # Hiển thị số bước của AI
-    ai_step_text = font.render(f"AI Steps: {AI_step}", True, Colors.WHITE)
-    ai_text_rect = ai_step_text.get_rect(center=ai_textbox_rect.center)  # Canh giữa văn bản trong textbox
-    screen.blit(ai_step_text, ai_text_rect)
-
-    # Textbox cho số bước của người chơi
-    player_textbox_rect = pygame.Rect(screen_width - 400, 140, textbox_width, textbox_height)
-    pygame.draw.rect(screen, border_color, player_textbox_rect, border_thickness)  # Vẽ viền
-    pygame.draw.rect(screen, textbox_color, player_textbox_rect.inflate(-border_thickness*2, -border_thickness*2))  # Vẽ nền
-
-    # Hiển thị số bước của người chơi
-    step_text = font.render(f"Steps: {player_step_counter}", True, Colors.WHITE)
-    step_text_rect = step_text.get_rect(center=player_textbox_rect.center)  # Canh giữa văn bản trong textbox
-    screen.blit(step_text, step_text_rect)'''
 
 
     draw_rounded_button(button_reset, "Reset", Colors.DARK_BLUE, 36 )
