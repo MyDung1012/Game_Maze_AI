@@ -1,0 +1,5 @@
+cập nhật random key reset'
+chưa loot đủ vẫn được di chuyển nếu chưa đến đích
+đụng máy trả về lại restart
+vẽ maze
+đếm ngược

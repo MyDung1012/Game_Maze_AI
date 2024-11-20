@@ -19,14 +19,16 @@ pygame.mixer.music.load('Sound/8bit.mp3')
 pygame.mixer.music.set_volume(0.3)
 pygame.mixer.music.play()
 
-initial_depth_limits = [18, 38, 58, 94, 106, 136, 164, 222, 178, 260]
+
+with open('difficulty.txt', 'r') as f:
+    maze_size = int(f.read().strip())
+
 try:
     with open('difficulty.txt', 'r') as f:
         maze_size = int(f.read().strip())
         # Kiểm tra maze_size nằm trong khoảng 10, 20, ..., 100
         if maze_size in range(10, 101, 10):  # Kiểm tra xem maze_size có phải bội số của 10 từ 10 đến 100
             index = maze_size // 10 - 1  # Tính chỉ số tương ứng
-            initial_depth_limit = initial_depth_limits[index]
         else:
             initial_depth_limit = 100  # Giá trị mặc định nếu maze_size ngoài phạm vi
 except (FileNotFoundError, ValueError) as e:
@@ -49,43 +51,37 @@ win_image = pygame.transform.scale(win_imagee, (600, 450))
 lose_image = pygame.transform.scale(lose_image, (600, 450))
 
 
-try:
-    with open(f"Maze/{maze_size}.txt", "r") as f:
-        maze_matrix = json.load(f)
-except (FileNotFoundError, SyntaxError) as e:
-    print(f"Error loading maze file: {e}")
-    sys.exit()
+with open(f"Maze/{maze_size}.txt", "r") as f:
+    maze_matrix = json.load(f)
+
 
 cell_width = maze_width // len(maze_matrix[0])
 cell_height = screen_height // len(maze_matrix) 
 
-try:
-    background_image = pygame.image.load('Image/bgbg.jpg')
-    background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
-except pygame.error as e:
-    print(f"Error loading background image: {e}")
-    sys.exit()
+background_image = pygame.image.load('Image/bgbg.jpg')
+background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 
-try:
-    path_image = pygame.image.load('Image/blockk.png') 
-    path_image = pygame.transform.scale(path_image, (cell_width, cell_height))
-except pygame.error as e:
-    print(f"Error loading path image: {e}")
-    sys.exit()
+path_image = pygame.image.load('Image/blockk.png') 
+path_image = pygame.transform.scale(path_image, (cell_width, cell_height))
+
 
 goal_image = pygame.image.load('Image/moon.png')
 goal_image = pygame.transform.scale(goal_image, (cell_width, cell_height))
 goal_rect = goal_image.get_rect()
-try:
-    planet_images = [
-        pygame.image.load('Image/planet1.png'), 
-        pygame.image.load('Image/planet2.png'), 
-        pygame.image.load('Image/planet3.png')  
-    ]
-except pygame.error as e:
-    print(f"Error loading planet images: {e}")
-    sys.exit()
 
+planet_images = [
+    pygame.image.load('Image/planet1.png'), 
+    pygame.image.load('Image/planet2.png'), 
+    pygame.image.load('Image/planet3.png')  
+]
+
+directions = [
+    (-1, 0),  # lên
+    (1, 0),   # xuống
+    (0, -1),  # trái
+    (0, 1),   # phải
+
+ ]
 class Planet:
     def __init__(self, image, x, y):
         self.image = pygame.transform.scale(image, (85, 64)) 
@@ -204,15 +200,6 @@ class Player:
                 self.image = pygame.transform.rotate(self.original_image, 90)
             elif direction == (0, 1):  # Phải
                 self.image = pygame.transform.rotate(self.original_image, -90)
-            elif direction == (-1, -1):# xéo trái lên
-                self.image = pygame.transform.rotate(self.original_image, 45)
-            elif direction == (1, -1):# xéo trái xuống
-                self.image = pygame.transform.rotate(self.original_image, 135)
-            elif direction == (-1, 1):# xéo phải lên
-                self.image = pygame.transform.rotate(self.original_image, -45)
-            elif direction == (1, 1): # xéo phải xuống
-                self.image = pygame.transform.rotate(self.original_image, -135)
-                
             self.row = new_row
             self.col = new_col
 
@@ -256,16 +243,13 @@ def reset_game():
     start_time = pygame.time.get_ticks()
 
 
+
 def solve_maze_bfs(maze, start, goal):
     directions = [
         (-1, 0),  # lên
         (1, 0),   # xuống
         (0, -1),  # trái
         (0, 1),   # phải
-        (-1, -1), # trên-trái
-        (-1, 1),  # trên-phải
-        (1, -1),  # dưới-trái
-        (1, 1)    # dưới-phải
     ]
     
     rows = len(maze)
@@ -307,19 +291,58 @@ def solve_maze_bfs(maze, start, goal):
                 came_from[neighbor] = current
     
     return None  # Không tìm thấy đường đi
-def solve_maze_dfs(maze, start, goal):
-    # 8 hướng di chuyển: trên, dưới, trái, phải, và 4 hướng chéo
+
+
+def solve_maze_bfs(maze, start, goal):
     directions = [
         (-1, 0),  # lên
         (1, 0),   # xuống
         (0, -1),  # trái
         (0, 1),   # phải
-        (-1, -1), # trên-trái
-        (-1, 1),  # trên-phải
-        (1, -1),  # dưới-trái
-        (1, 1)    # dưới-phải
     ]
+
+    rows = len(maze)
+    cols = len(maze[0])
     
+    queue = deque([(start)])
+    visited = {start}
+    
+    # Dictionary lưu đường đi
+    came_from = {}
+    
+    while queue:
+        current = queue.popleft()
+        
+        if current == goal:
+            # Tái tạo đường đi
+            path = []
+            while current in came_from:
+                prev = came_from[current]
+                path.append((current[0] - prev[0], current[1] - prev[1]))
+                current = prev
+            path.reverse()
+            return path
+            
+        # Kiểm tra tất cả các hướng có thể đi
+        for dx, dy in directions:
+            next_row = current[0] + dx
+            next_col = current[1] + dy
+            neighbor = (next_row, next_col)
+            
+            # Kiểm tra điều kiện hợp lệ
+            if (0 <= next_row < rows and 
+                0 <= next_col < cols and 
+                maze[next_row][next_col] == 0 and  # 0 là đường đi
+                neighbor not in visited):
+                
+                queue.append(neighbor)
+                visited.add(neighbor)
+                came_from[neighbor] = current
+    
+    return None  # Không tìm thấy đường đi
+def solve_maze_dfs(maze, start, goal):
+    # 8 hướng di chuyển: trên, dưới, trái, phải, và 4 hướng chéo
+
     rows = len(maze)
     cols = len(maze[0])
     
@@ -364,16 +387,7 @@ def heuristic(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 def solve_maze_astar(maze, start, goal):
-    directions = [
-        (-1, 0),  # lên
-        (1, 0),   # xuống
-        (0, -1),  # trái
-        (0, 1),   # phải
-        (-1, -1), # trên-trái
-        (-1, 1),  # trên-phải
-        (1, -1),  # dưới-trái
-        (1, 1)    # dưới-phải
-    ]
+
     
     rows = len(maze)
     cols = len(maze[0])
@@ -446,93 +460,131 @@ def draw_rounded_button(button_rect, text, color, font_size, border_color_outer=
     screen.blit(label, label.get_rect(center=adjusted_rect.center))
 
 
-def solve_backtracking(maze, start, goal, initial_depth_limit):
-    # Directions for movement
-    directions = [
-        (-1, 0),  # up
-        (1, 0),   # down
-        (0, -1),  # left
-        (0, 1),   # right
-        #(-1, -1), # up-left
-        #(-1, 1),  # up-right
-        #(1, -1),  # down-left
-        #(1, 1)    # down-right
-    ]
-    
-    # Initialize depth limits and constraints for recursion
-    depth_limit = initial_depth_limit
-    max_depth_limit = 1000
-    max_backtracks = 10000
-    stepIDS = 50
+class CSP:
+    """Mô hình CSP với miền giá trị, biến và ràng buộc."""
+    def __init__(self, variables, domains, neighbors, constraints):
+        self.variables = variables
+        self.domains = domains
+        self.neighbors = neighbors
+        self.constraints = constraints
+        self.curr_domains = None
+        self.nassigns = 0
 
-    # Heuristic function to estimate distance to the goal
-    def heuristic(cell):
-        return abs(cell[0] - goal[0]) + abs(cell[1] - goal[1])
+    def assign(self, var, value, assignment):
+        """Gán giá trị cho biến."""
+        assignment[var] = value
+        self.nassigns += 1
 
-    path = []  # To store the current path
+    def unassign(self, var, assignment):
+        """Hủy gán giá trị cho biến."""
+        if var in assignment:
+            del assignment[var]
 
-    # Simplified AC-3 for debugging
-    def ac3_constraints(current):
-        # Just return True for debugging to bypass constraints
-        return True
+    def nconflicts(self, var, value, assignment):
+        """Đếm số xung đột của biến."""
+        def conflict(var2):
+            return var2 in assignment and not self.constraints(var, value, var2, assignment[var2])
+        return sum(conflict(v) for v in self.neighbors[var])
 
-    # Main backtracking function with depth and backtrack limits
-    def backtrack(current, depth, visited, backtracks):
-        # Debug: Print current position and depth
-        print(f"Visiting {current}, depth {depth}, backtracks {backtracks}")
+def first_unassigned_variable(assignment, csp):
+    """Lựa chọn biến chưa được gán giá trị."""
+    return next((var for var in csp.variables if var not in assignment), None)
 
-        # Check if we've exceeded the depth or backtrack limits
-        if depth > depth_limit or backtracks >= max_backtracks:
-            print(f"Depth or backtrack limit reached at {current}")
-            return False
+def argmin_random_tie(seq, key=lambda x: x):
+    """Chọn phần tử nhỏ nhất với tie-breaking ngẫu nhiên."""
+    items = list(seq)
+    random.shuffle(items)
+    return min(items, key=key)
 
-        # Check if we reached the goal
-        if current == goal:
-            print("Goal reached!")
-            return True
+def count(seq):
+    """Đếm số phần tử đúng trong một dãy."""
+    return sum(bool(x) for x in seq)
 
-        visited.add(current)
-        
-        # Sort directions based on distance to goal
-        sorted_directions = sorted(directions, key=lambda d: heuristic((current[0] + d[0], current[1] + d[1])))
 
-        for direction in sorted_directions:
-            next_cell = (current[0] + direction[0], current[1] + direction[1])
+def AC3(csp):
+    """Áp dụng AC3 cho mê cung."""
+    queue = {(Xi, Xk) for Xi in csp.variables for Xk in csp.neighbors[Xi]}
+    csp.curr_domains = csp.domains.copy()  # Sao chép miền giá trị ban đầu
 
-            # Check validity of the next cell
-            if (0 <= next_cell[0] < len(maze) and 
-                0 <= next_cell[1] < len(maze[0]) and 
-                maze[next_cell[0]][next_cell[1]] == 0 and 
-                next_cell not in visited):
+    while queue:
+        Xi, Xj = queue.pop()
+        if revise(csp, Xi, Xj):
+            if not csp.curr_domains[Xi]:  # Nếu miền giá trị trống, không thỏa mãn
+                print(f"AC3 failure: Domain of {Xi} is empty.")
+                return False
+            for Xk in csp.neighbors[Xi] - {Xj}:
+                queue.add((Xk, Xi))
 
-                # Apply simplified AC-3 constraint for debugging
-                if ac3_constraints(next_cell):
-                    path.append(direction)
-                    
-                    # Recur with updated depth and backtrack count
-                    if backtrack(next_cell, depth + 1, visited, backtracks):
-                        return True
+    # Gỡ lỗi
+    print("Domains after AC3:")
+    for var, domain in csp.curr_domains.items():
+        print(f"{var}: {domain}")
+    return True
 
-                    # Backtrack if the current path doesn't lead to a solution
-                    path.pop()
-                    backtracks += 1  # Increase backtrack count after unsuccessful attempt
 
-        visited.remove(current)  # Clean up visited for this path
-        return False
 
-    # Iteratively increase depth limit if no solution found
-    while depth_limit <= max_depth_limit:
-        print(f"Trying depth limit {depth_limit}")
-        visited = set()  # Reset visited set for each new depth limit attempt
-        if backtrack(start, 0, visited, 0):
-            print("Path found!")
-            return path  # Return the successful path
-        else:
-            print("No path found, increasing depth limit")
-            depth_limit += stepIDS  # Increment depth limit for iterative deepening
 
-    print("No solution found within depth and backtrack limits.")
-    return None  # Return None if no path is found
+def revise(csp, Xi, Xj):
+    """Loại bỏ giá trị không hợp lệ trong miền giá trị của Xi."""
+    revised = False
+    for x in csp.curr_domains[Xi][:]:  # Sao chép danh sách để tránh lỗi khi xóa
+        if not any(csp.constraints(Xi, x, Xj, y) for y in csp.curr_domains[Xj]):
+            csp.curr_domains[Xi].remove(x)
+            revised = True
+    return revised
+
+def build_csp_from_maze(maze, start, goal):
+    variables = [(r, c) for r in range(len(maze)) for c in range(len(maze[0])) if maze[r][c] == 0]
+    domains = {(r, c): [(r + dr, c + dc) for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                        if 0 <= r + dr < len(maze) and 0 <= c + dc < len(maze[0]) and maze[r + dr][c + dc] == 0]
+               for r, c in variables}
+    neighbors = {(r, c): [neighbor for neighbor in domains[(r, c)] if neighbor in variables] for r, c in variables}
+
+    # Gỡ lỗi
+    print(f"Variables: {variables}")
+    print(f"Domains: {domains}")
+    print(f"Neighbors: {neighbors}")
+    return CSP(variables, domains, neighbors, lambda A, a, B, b: a != b)
+
+
+
+
+def backtracking_search(csp):
+    """Tìm đường đi bằng backtracking."""
+    def backtrack(assignment):
+        if len(assignment) == len(csp.variables):
+            return assignment
+
+        var = first_unassigned_variable(assignment, csp)
+        for value in csp.curr_domains[var]:
+            if csp.nconflicts(var, value, assignment) == 0:
+                csp.assign(var, value, assignment)
+                result = backtrack(assignment)
+                if result:
+                    return result
+                csp.unassign(var, assignment)
+
+        return None  # Không tìm thấy giải pháp
+
+    assignment = backtrack({})
+    if assignment:
+        print(f"Backtracking assignment: {assignment}")
+        # Chuyển đổi assignment thành đường đi
+        start = min(assignment.keys(), key=lambda x: (x[0], x[1]))  # Bắt đầu từ điểm nhỏ nhất
+        path = []
+        current = start
+        while current in assignment:
+            next_step = assignment[current]
+            path.append((next_step[0] - current[0], next_step[1] - current[1]))
+            current = next_step
+        print(f"Path derived from assignment: {path}")
+        return path
+    print("Backtracking failed to find a solution.")
+    return None
+
+
+
+
 
 
 class Boat:
@@ -543,28 +595,48 @@ class Boat:
         self.image = pygame.transform.scale(self.image, (cell_width, cell_height))
         self.path = None
         self.path_index = 0
-        self.algorithm_selected = None  # Biến kiểm tra thuật toán đã chọn
-        self.last_move_time = 0  # Thời gian lần cuối thuyền di chuyển (ms)
-        self.move_delay = 1000  # Thời gian trễ giữa các lần di chuyển (ms)
+        self.algorithm_selected = None
+        self.last_move_time = 0
+        self.move_delay = 1000
 
     def update_path(self, maze, target, algorithm):
-        if algorithm == "BFS":
-            self.path = solve_maze_bfs(maze, (self.row, self.col), target)
+        if algorithm == "AC3+Backtracking":
+            print(f"Running AC3+Backtracking for boat at ({self.row}, {self.col})")
+            maze_csp = build_csp_from_maze(maze, (self.row, self.col), target)
+            if AC3(maze_csp):
+                self.path = backtracking_search(maze_csp)
+                if self.path is None:
+                    print("Backtracking did not find a solution.")
+                else:
+                    print(f"Path found by Backtracking: {self.path}")
+            else:
+                self.path = None
+                print("AC3 failed to simplify the CSP.")
+        elif algorithm == "BFS":
+            print(f"Running BFS for boat at ({self.row}, {self.col})")
+            self.path = solve_maze_bfs(maze, (self.row, self.col), target) or []
         elif algorithm == "DFS":
-            self.path = solve_maze_dfs(maze, (self.row, self.col), target)
+            print(f"Running DFS for boat at ({self.row}, {self.col})")
+            self.path = solve_maze_dfs(maze, (self.row, self.col), target) or []
         elif algorithm == "A*":
-            self.path = solve_maze_astar(maze, (self.row, self.col), target)
-        elif algorithm == "Backtracking":
-            self.path = solve_backtracking(maze, (self.row, self.col), target, initial_depth_limit)
+            print(f"Running A* for boat at ({self.row}, {self.col})")
+            self.path = solve_maze_astar(maze, (self.row, self.col), target) or []
         else:
-            self.path = None
+            self.path = []  # Không tìm thấy đường đi
+
         self.path_index = 0
+        if not self.path:
+            print(f"No path found using {algorithm}. Boat remains at ({self.row}, {self.col}).")
+
+
 
     def move(self, maze):
-        # Kiểm tra thời gian hiện tại so với thời gian lần cuối thuyền di chuyển
         current_time = pygame.time.get_ticks()
         if current_time - self.last_move_time >= self.move_delay:
-            if self.path and self.path_index < len(self.path):
+            if not self.path:
+                print("Boat has no path.")
+                return  # Không có đường đi
+            if self.path_index < len(self.path):
                 direction = self.path[self.path_index]
                 next_row = self.row + direction[0]
                 next_col = self.col + direction[1]
@@ -572,12 +644,18 @@ class Boat:
                     self.row = next_row
                     self.col = next_col
                     self.path_index += 1
-            self.last_move_time = current_time  # Cập nhật thời gian lần cuối di chuyển
+                print(f"Boat moved to ({self.row}, {self.col})")
+            else:
+                print("Boat reached the end of its path.")
+            self.last_move_time = current_time
+
+
 
     def draw(self, surface):
         x = self.col * cell_width
         y = self.row * cell_height
         surface.blit(self.image, (x, y))
+
 
 class Key:
     def __init__(self, x, y, image):
@@ -622,6 +700,14 @@ button_A = pygame.Rect(screen_width - 220, screen_height - 240, 200, 60)
 button_home = pygame.Rect(screen_width - 220, screen_height - 160, 200, 60)
 button_exit = pygame.Rect(screen_width - 220, screen_height - 80, 200, 60)
 
+button_reset = pygame.Rect(screen_width - 220, screen_height - 560, 200, 60)
+button_backtracking = pygame.Rect(screen_width - 220, screen_height - 480, 200, 60) 
+button_dfs = pygame.Rect(screen_width - 220, screen_height - 400, 200, 60)
+button_bfs = pygame.Rect(screen_width - 220, screen_height - 320, 200, 60)
+button_A = pygame.Rect(screen_width - 220, screen_height - 240, 200, 60)
+button_home = pygame.Rect(screen_width - 220, screen_height - 160, 200, 60)
+button_exit = pygame.Rect(screen_width - 220, screen_height - 80, 200, 60)
+
 
 def display_outcome_box(text):
     # Vị trí và kích thước của bảng thông báo
@@ -645,6 +731,9 @@ def thongbao(outcome_text):
     screen.blit(instructions_win, instructions_win_rect)
 
 # Add after maze initialization
+
+player = Player(0, 0)
+
 player = Player(0, 0)  # Changed from Player(1, 1)
 boat = Boat(maze_size - 1, 0)  # Vị trí bắt đầu của thuyền (phía dưới bên trái)
 
@@ -653,6 +742,7 @@ player_won = False
 algorithm_selected = None  # Biến để lưu thuật toán đã chọn
 start_time = pygame.time.get_ticks()  # Lưu thời gian bắt đầu trò chơi
 ai_active = False
+
 
 # Initialize auto_move_path, auto_move_index, and AI_step
 auto_move_path = None
@@ -676,7 +766,12 @@ ai_completed = False
 
   # Thời gian bắt đầu hiển thị thông báo\
 
-
+def ai_move(auto_move_path, auto_move_index, maze_matrix):
+    if auto_move_path is not None and auto_move_index < len(auto_move_path):
+        direction = auto_move_path[auto_move_index]
+        player.move(direction, maze_matrix)  # Assuming player is an instance of Player
+        return auto_move_index + 1
+    return auto_move_index  # Return the current index if no move is made
 
 # Vòng lặp chính
 while True:
@@ -688,30 +783,19 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_KP1 or event.key == pygame.K_1:
-                if player.move((1,-1), maze_matrix):  # Down-Left
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP2 or event.key == pygame.K_2:
-                if player.move((1, 0), maze_matrix):   # Down
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP3 or event.key == pygame.K_3:
-                if player.move((1, 1), maze_matrix):   # Down-Right
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP4 or event.key == pygame.K_4:
-                if player.move((0, -1), maze_matrix):  # Left
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP6 or event.key == pygame.K_6:
-                if player.move((0, 1), maze_matrix):   # Right
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP7 or event.key == pygame.K_7:
-                if player.move((-1,-1), maze_matrix): # Up-Left
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP8 or event.key == pygame.K_8:
-                if player.move((-1, 0), maze_matrix):  # Up
-                    player_step_counter += 1
-            elif event.key == pygame.K_KP9 or event.key == pygame.K_9:
-                if player.move((-1,1), maze_matrix):  # Up-Right
-                    player_step_counter += 1
+            direction = None
+            if event.key == pygame.K_LEFT:
+                direction = (0, -1)  # Trái
+            elif event.key == pygame.K_RIGHT:
+                direction = (0, 1)   # Phải
+            elif event.key == pygame.K_UP:
+                direction = (-1, 0)  # Lên
+            elif event.key == pygame.K_DOWN:
+                direction = (1, 0)   # Xuống
+
+            if direction:
+                player.move(direction, maze_matrix)  # Call the move method of the Player class
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if button_reset.collidepoint(event.pos):
                 print("Reset button clicked")
@@ -734,8 +818,9 @@ while True:
                 print("A* button clicked")
                 algorithm_selected = "A*"
             elif button_backtracking.collidepoint(event.pos):
-                print("Backtracking button clicked")
-                algorithm_selected = "Backtracking"
+                print("AC3+Backtracking button clicked")
+                algorithm_selected = "AC3+Backtracking"
+                boat.update_path(maze_matrix, (player.row, player.col), algorithm_selected)
             elif button_exit.collidepoint(event.pos):
                 print("Exit button clicked")
                 pygame.quit()
@@ -753,6 +838,9 @@ while True:
     show_outcome = False  # Biến điều kiện để hiển thị thông báo
     outcome_time = 0
     # Check if it's time to move to the next step
+
+    auto_move_index = ai_move(auto_move_path, auto_move_index, maze_matrix)  # Call the new AI movement function
+
     if auto_move_path and auto_move_index < len(auto_move_path):
         direction = auto_move_path[auto_move_index]
         player.move(direction, maze_matrix)
@@ -769,8 +857,6 @@ while True:
         boat.update_path(maze_matrix, (player.row, player.col), algorithm_selected)
         boat.move(maze_matrix)
 
-        # Kiểm tra nếu thuyền bắt được tên lửa
-        # Kiểm tra nếu người chơi đến đích
         if player.is_at_goal():
             if collected_keys == num_keys:
                 game_over = True
