@@ -31,10 +31,6 @@ button_image = pygame.image.load('Image/Dragger.jpg')
 button_image = pygame.transform.scale(button_image, (30, 50))
 
 
-# Load difficulty level images (for levels 1 to 10)
-difficulty_images = [pygame.image.load(f'Image/Level{i}.png') for i in range(1, 2)]
-difficulty_images = [pygame.transform.scale(img, (200, 200)) for img in difficulty_images]
-
 # Hàm vẽ nền
 def draw_background():
     screen.fill((0, 0, 0))

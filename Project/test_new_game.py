@@ -188,24 +188,18 @@ class Boat:
         self.move_delay = 1000
 
     def update_path(self, maze, target, algorithm):
-        '''if algorithm == "AC3+Backtracking":
-            print(f"Running AC3+Backtracking for boat at ({self.row}, {self.col})")
-            maze_csp = build_csp_from_maze(maze, (self.row, self.col), target)
-            if AC3(maze_csp):
-                self.path = backtracking_search(maze_csp)
-                if self.path is None:
-                    print("Backtracking did not find a solution.")
-                else:
-                    print(f"Path found by Backtracking: {self.path}")
-            else:
-                self.path = None
-                print("AC3 failed to simplify the CSP.")'''
-        if algorithm == "BFS":
+        if algorithm == "Backtracking":
+            print(f"Running Backtracking for boat at ({self.row}, {self.col})")
+            self.path = solve_maze_backtracking(maze, (self.row, self.col), target) or []
+        elif algorithm == "BFS":
             print(f"Running BFS for boat at ({self.row}, {self.col})")
             self.path = solve_maze_bfs(maze, (self.row, self.col), target) or []
         elif algorithm == "A*":
             print(f"Running A* for boat at ({self.row}, {self.col})")
             self.path = solve_maze_astar(maze, (self.row, self.col), target) or []
+        elif algorithm == "Simulated Annealing":
+            print(f"Running Simulated Annealing for boat at ({self.row}, {self.col})")
+            self.path = solve_maze_simulated_annealing(maze, (self.row, self.col), target) or []
         else:
             self.path = []  # Không tìm thấy đường đi
 
@@ -214,7 +208,7 @@ class Boat:
             print(f"No path found using {algorithm}. Boat remains at ({self.row}, {self.col}).")
 
 
-    def move(self, maze):
+    '''def move(self, maze):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_move_time >= self.move_delay:
             if not self.path:
@@ -231,7 +225,31 @@ class Boat:
                 print(f"Boat moved to ({self.row}, {self.col})")
             else:
                 print("Boat reached the end of its path.")
+            self.last_move_time = current_time'''
+    
+    def move(self, maze):
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_move_time >= self.move_delay:
+            if not self.path:
+                print("Boat has no path.")
+                return  # Không có đường đi
+            if self.path_index < len(self.path):
+                direction = self.path[self.path_index]
+                next_row = self.row + direction[0]
+                next_col = self.col + direction[1]
+
+                # Chỉ di chuyển nếu bước tiếp theo là hợp lệ
+                if 0 <= next_row < len(maze) and 0 <= next_col < len(maze[0]) and maze[next_row][next_col] == 0:
+                    self.row = next_row
+                    self.col = next_col
+                    self.path_index += 1
+                    print(f"Boat moved to ({self.row}, {self.col})")
+                else:
+                    print(f"Boat cannot move to ({next_row}, {next_col}).")
+            else:
+                print("Boat reached the end of its path.")
             self.last_move_time = current_time
+
 
 
 
@@ -372,7 +390,6 @@ def solve_maze_bfs(maze, start, goal):
 def heuristic(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 def solve_maze_astar(maze, start, goal):
-
     
     rows = len(maze)
     cols = len(maze[0])
@@ -426,10 +443,103 @@ def solve_maze_astar(maze, start, goal):
     
     return None  # Không tìm thấy đường đi
 
+def solve_maze_backtracking(maze, start, goal):
+    """
+    Thuật toán Backtracking để tìm đường đi từ start đến goal.
+    """
+    rows, cols = len(maze), len(maze[0])
+    path = []  # Lưu các bước đi [(dx, dy)]
+    visited = set()
+
+    def backtrack(position):
+        if position == goal:
+            return True  # Tìm thấy đích
+
+        row, col = position
+        visited.add(position)
+
+        # Thử tất cả các hướng (lên, xuống, trái, phải)
+        for dx, dy in directions:
+            new_row, new_col = row + dx, col + dy
+            next_position = (new_row, new_col)
+
+            # Kiểm tra tính hợp lệ của ô tiếp theo
+            if (0 <= new_row < rows and
+                0 <= new_col < cols and
+                maze[new_row][new_col] == 0 and  # 0 là đường đi
+                next_position not in visited):  # Chưa thăm
+                path.append((dx, dy))
+                if backtrack(next_position):
+                    return True
+                # Nếu không tìm thấy đường, quay lui
+                path.pop()
+
+        # Gỡ trạng thái đã thăm khi quay lui
+        visited.remove(position)
+        return False
+
+    if backtrack(start):
+        return path
+    return None  # Không tìm thấy đường đi
+
+import math
+import random
+
+def solve_maze_simulated_annealing(maze, start, goal, initial_temp=100, cooling_rate=0.99, max_steps=1000):
+    """
+    Tìm đường đi trong mê cung bằng thuật toán Simulated Annealing.
+    
+    Args:
+        maze (list): Ma trận mê cung.
+        start (tuple): Vị trí bắt đầu (row, col).
+        goal (tuple): Vị trí đích (row, col).
+        initial_temp (float): Nhiệt độ ban đầu.
+        cooling_rate (float): Tỷ lệ làm mát (giảm nhiệt độ).
+        max_steps (int): Số bước tối đa.
+
+    Returns:
+        list: Đường đi từ start đến goal hoặc None nếu không tìm thấy.
+    """
+    current_state = start
+    current_path = []
+    temperature = initial_temp
+
+    def calculate_cost(state):
+        """Hàm đánh giá trạng thái dựa trên khoảng cách Manhattan đến goal."""
+        return abs(state[0] - goal[0]) + abs(state[1] - goal[1])
+
+    def get_neighbors(state):
+        """Trả về danh sách các trạng thái hàng xóm hợp lệ."""
+        neighbors = []
+        for dx, dy in directions:
+            new_row, new_col = state[0] + dx, state[1] + dy
+            if 0 <= new_row < len(maze) and 0 <= new_col < len(maze[0]) and maze[new_row][new_col] == 0:
+                neighbors.append((new_row, new_col))
+        return neighbors
+
+    for step in range(max_steps):
+        if current_state == goal:
+            return current_path  # Đã tìm thấy đích
+
+        neighbors = get_neighbors(current_state)
+        if not neighbors:
+            break  # Không còn trạng thái hợp lệ để thử
+
+        next_state = random.choice(neighbors)
+        cost_diff = calculate_cost(next_state) - calculate_cost(current_state)
+
+        if cost_diff < 0 or random.random() < math.exp(-cost_diff / temperature):
+            current_state = next_state
+            current_path.append((next_state[0] - current_state[0], next_state[1] - current_state[1]))
+
+        temperature *= cooling_rate  # Giảm nhiệt độ
+
+    return None  # Không tìm thấy đường đi
+
 
 button_reset = pygame.Rect(screen_width - 220, screen_height - 560, 200, 60)
 button_backtracking = pygame.Rect(screen_width - 220, screen_height - 480, 200, 60) 
-button_dfs = pygame.Rect(screen_width - 220, screen_height - 400, 200, 60)
+button_simulated_annealing = pygame.Rect(screen_width - 220, screen_height - 400, 200, 60)
 button_bfs = pygame.Rect(screen_width - 220, screen_height - 320, 200, 60)
 button_A = pygame.Rect(screen_width - 220, screen_height - 240, 200, 60)
 button_home = pygame.Rect(screen_width - 220, screen_height - 160, 200, 60)
@@ -488,7 +598,11 @@ while True:
                 algorithm_selected = "A*"
             elif button_backtracking.collidepoint(event.pos):
                 print("AC3+Backtracking button clicked")
-                algorithm_selected = "AC3+Backtracking"
+                algorithm_selected = "Backtracking"
+            elif button_simulated_annealing.collidepoint(event.pos):
+                print("Simulated Annealing button clicked")
+                algorithm_selected = "Simulated Annealing"
+                boat.update_path(maze_matrix, (player.row, player.col), algorithm_selected)
                 boat.update_path(maze_matrix, (player.row, player.col), algorithm_selected)
             elif button_exit.collidepoint(event.pos):
                 print("Exit button clicked")
@@ -539,7 +653,7 @@ while True:
     draw_rounded_button(button_reset, "Reset", Colors.DARK_BLUE, 36 )
     draw_rounded_button(button_home, "Home",Colors.DARK_BLUE, 36)
     draw_rounded_button(button_bfs, "BFS", Colors.DARK_BLUE, 36)
-    draw_rounded_button(button_dfs, "DFS", Colors.DARK_BLUE, 36)
+    draw_rounded_button(button_simulated_annealing, "Simulated Annealing", Colors.DARK_BLUE, 36)
     draw_rounded_button(button_exit, "Exit", Colors.DARK_BLUE, 36)
     draw_rounded_button(button_A, "A*", Colors.DARK_BLUE, 36)
     draw_rounded_button(button_backtracking, "Backtracking", Colors.DARK_BLUE, 36)

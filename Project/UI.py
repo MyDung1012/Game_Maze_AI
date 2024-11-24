@@ -25,7 +25,7 @@ def create_buttons(screen_width, screen_height):
     buttons = {
         "reset": pygame.Rect(screen_width - 220, screen_height - 560, 200, 60),
         "backtracking": pygame.Rect(screen_width - 220, screen_height - 480, 200, 60),
-        "dfs": pygame.Rect(screen_width - 220, screen_height - 400, 200, 60),
+        "simulated_annealing": pygame.Rect(screen_width - 220, screen_height - 400, 200, 60),
         "bfs": pygame.Rect(screen_width - 220, screen_height - 320, 200, 60),
         "a_star": pygame.Rect(screen_width - 220, screen_height - 240, 200, 60),
         "home": pygame.Rect(screen_width - 220, screen_height - 160, 200, 60),

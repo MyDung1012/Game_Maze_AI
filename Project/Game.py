@@ -69,18 +69,19 @@ while True:
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            direction = None
-            if event.key == pygame.K_LEFT:
-                direction = (0, -1)  # Trái
-            elif event.key == pygame.K_RIGHT:
-                direction = (0, 1)   # Phải
-            elif event.key == pygame.K_UP:
-                direction = (-1, 0)  # Lên
-            elif event.key == pygame.K_DOWN:
-                direction = (1, 0)   # Xuống
-
-            if direction:
-                player.move(direction, maze_matrix)  # Call the move method of the Player class
+            if not game_over:
+                direction = None
+                if event.key == pygame.K_LEFT:
+                    direction = (0, -1)  # Trái
+                elif event.key == pygame.K_RIGHT:
+                    direction = (0, 1)   # Phải
+                elif event.key == pygame.K_UP:
+                    direction = (-1, 0)  # Lên
+                elif event.key == pygame.K_DOWN:
+                    direction = (1, 0)   # Xuống
+                
+                if direction: 
+                    player.move(direction, maze_matrix)
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if buttons["reset"].collidepoint(event.pos):
@@ -99,6 +100,9 @@ while True:
             elif buttons["backtracking"].collidepoint(event.pos):
                 print("Backtracking button clicked")
                 algorithm_selected = "AC3+Backtracking"
+            elif buttons["simulated_annealing"].collidepoint(event.pos):
+                print("Simulated Annealing button clicked")
+                algorithm_selected = "Simulated Annealing"
             elif buttons["exit"].collidepoint(event.pos):
                 print("Exit button clicked")
                 pygame.quit()
@@ -113,7 +117,7 @@ while True:
         boat.move(maze_matrix)
 
         if player.is_at_goal():
-            pygame.time.delay(3000)
+            #pygame.time.delay(3000)
             if collected_keys == num_keys:
                 game_over = True
                 player_won = True
@@ -148,6 +152,7 @@ while True:
     draw_rounded_button(buttons["reset"], "Reset", Colors.DARK_BLUE, 36 )
     draw_rounded_button(buttons["home"], "Home",Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["bfs"], "BFS", Colors.DARK_BLUE, 36)
+    draw_rounded_button(buttons["simulated_annealing"], "Simulated Annealing", Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["exit"], "Exit", Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["a_star"], "A*", Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["backtracking"], "Backtracking", Colors.DARK_BLUE, 36)
