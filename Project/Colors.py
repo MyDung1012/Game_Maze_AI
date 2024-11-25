@@ -18,4 +18,6 @@ class Colors:
     RED = getcolor("#FF0000")
     GREEN = getcolor("#00FF00")
     GREY = getcolor("#808080")
+    PURPLE_2 = getcolor("#BA55D3")
+    LIGHT_YELLOW = getcolor("#FFFA96")
 

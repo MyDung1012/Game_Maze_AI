@@ -243,6 +243,12 @@ def reset_game():
 
 def solve_maze_bfs(maze, start, goal):
 
+    directions = [
+        (-1, 0),  # lên
+        (1, 0),   # xuống
+        (0, -1),  # trái
+        (0, 1),   # phải
+    ]
     
     rows = len(maze)
     cols = len(maze[0])
@@ -286,6 +292,12 @@ def solve_maze_bfs(maze, start, goal):
 
 
 def solve_maze_bfs(maze, start, goal):
+    directions = [
+        (-1, 0),  # lên
+        (1, 0),   # xuống
+        (0, -1),  # trái
+        (0, 1),   # phải
+    ]
 
     rows = len(maze)
     cols = len(maze[0])
@@ -804,8 +816,6 @@ while True:
     
 
 
-        # Kiểm tra nếu thuyền bắt được tên lửa
-        # Kiểm tra nếu người chơi đến đích
         if player.is_at_goal():
             if collected_keys == num_keys:
                 game_over = True
