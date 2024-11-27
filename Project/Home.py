@@ -2,6 +2,7 @@ import pygame
 import sys
 import random
 from Colors import Colors
+import os
 
 
 pygame.init()
@@ -233,7 +234,11 @@ while True:
                 with open('difficulty.txt', 'w') as f:
                     f.write("")
                     f.write(str(difficulty_value))
-                exec(open("Game.py", encoding="utf-8").read())
+                import subprocess
+
+                subprocess.Popen(['python', 'Game.py'])
+                #os.execv(sys.executable, ['python'] + [os.path.join(os.getcwd(), 'Game.py')])
+                #exec(open("Game.py", encoding="utf-8").read())
             # Kiểm tra nếu click vào nút "Exit"
             elif screen_width - 220 <= mouse_x <= screen_width - 20 and screen_height - 80 <= mouse_y <= screen_height - 20:
                 pygame.quit()

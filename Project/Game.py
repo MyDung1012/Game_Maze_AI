@@ -103,6 +103,9 @@ while True:
             elif buttons["simulated_annealing"].collidepoint(event.pos):
                 print("Simulated Annealing button clicked")
                 algorithm_selected = "Simulated Annealing"
+            elif buttons["RL"].collidepoint(event.pos):
+                print("RL button clicked")
+                exec(open("Qlearning.py", encoding="utf-8").read())
             elif buttons["exit"].collidepoint(event.pos):
                 print("Exit button clicked")
                 pygame.quit()
@@ -150,9 +153,10 @@ while True:
         key.draw(screen)
 
     draw_rounded_button(buttons["reset"], "Reset", Colors.DARK_BLUE, 36 )
+    draw_rounded_button(buttons["RL"], "RL", Colors.DARK_BLUE, 36 )
     draw_rounded_button(buttons["home"], "Home",Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["bfs"], "BFS", Colors.DARK_BLUE, 36)
-    draw_rounded_button(buttons["simulated_annealing"], "Simulated Annealing", Colors.DARK_BLUE, 36)
+    draw_rounded_button(buttons["simulated_annealing"], "SA", Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["exit"], "Exit", Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["a_star"], "A*", Colors.DARK_BLUE, 36)
     draw_rounded_button(buttons["backtracking"], "Backtracking", Colors.DARK_BLUE, 36)

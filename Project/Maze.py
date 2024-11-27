@@ -46,4 +46,3 @@ class Maze:
         for i, (color, thickness) in enumerate(layers):
             offset = i * 1 
             pygame.draw.rect(surface, color, (offset, offset, maze_width - 1 * offset, maze_height - 1 * offset), thickness, border_radius=corner_size)
-
