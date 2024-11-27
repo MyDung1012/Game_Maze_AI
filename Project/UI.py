@@ -23,12 +23,16 @@ import pygame
 # Thiết lập các nút
 def create_buttons(screen_width, screen_height):
     buttons = {
-        "reset": pygame.Rect(screen_width - 220, screen_height - 560, 200, 60),
+        "reset": pygame.Rect(screen_width - 220, screen_height - 640, 200, 60),
+        "RL": pygame.Rect(screen_width - 220, screen_height - 560, 200, 60),
         "backtracking": pygame.Rect(screen_width - 220, screen_height - 480, 200, 60),
         "simulated_annealing": pygame.Rect(screen_width - 220, screen_height - 400, 200, 60),
         "bfs": pygame.Rect(screen_width - 220, screen_height - 320, 200, 60),
         "a_star": pygame.Rect(screen_width - 220, screen_height - 240, 200, 60),
         "home": pygame.Rect(screen_width - 220, screen_height - 160, 200, 60),
-        "exit": pygame.Rect(screen_width - 220, screen_height - 80, 200, 60)
+        "exit": pygame.Rect(screen_width - 220, screen_height - 80, 200, 60),
+        "game": pygame.Rect(screen_width - 220, screen_height - 160, 200, 60),
+        "start": pygame.Rect(screen_width - 220, screen_height - 240, 200, 60),
+        "stop": pygame.Rect(screen_width - 220, screen_height - 320, 200, 60)
     }
     return buttons

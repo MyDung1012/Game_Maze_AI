@@ -1,12 +1,13 @@
 import pygame
 import random
-from Config import maze_size, cell_width, cell_height
+from Config import maze_size, cell_width, cell_height, key_image
 class Key:
     def __init__(self, x, y, image):
         self.row = x
         self.col = y
         self.image = pygame.transform.scale(image, (cell_width, cell_height))
         self.collected = False  # Trạng thái đã được thu thập hay chưa
+        self.image = pygame.transform.scale(key_image, (cell_width, cell_height))
 
     def draw(self, surface):
         if not self.collected:

@@ -12,6 +12,7 @@ class Player:
         self.image = self.original_image
         self.reset_position()
         self.game_completed = False 
+        #self.image = pygame.transform.scale(player_image, (cell_width, cell_height))
 
     def reset_position(self):
         self.row = 0
