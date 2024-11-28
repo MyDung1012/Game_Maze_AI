@@ -11,7 +11,9 @@ THIS IS MY DEMO FOR 4 ALGORITHM TO SOVLE THE MAZE 20x20
 ![20x20](https://github.com/user-attachments/assets/d31fd129-05e1-4501-9ec5-0c347af91dc7)
 
 2. SOLVE MAZE WITH REINFORCEMENT LEARNING
+WHITH ESPISODE = 1: Reward = -8013, Steps = 2075
 
+![espisode1-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/e8c026f0-4be3-4712-bc0e-ef40f7e7ab09)
 
 Packages using in this project:
 1. pygame
