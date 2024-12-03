@@ -22,61 +22,38 @@ class Boat:
         self.algorithm_selected = None
         self.last_move_time = 0
         self.move_delay = 150
+        self.step_count = 0
+        self.start_position = (x, y)  # Lưu vị trí bắt đầu
+        self.end_position = None      # Lưu vị trí cuối cùng
 
     def update_path(self, maze, target, algorithm):
         if algorithm == "BFS":
             print(f"Running BFS for boat at ({self.row}, {self.col})")
             self.path = solve_maze_bfs(maze, (self.row, self.col), target) or []
         elif algorithm == "A*":
-            print(f"Running A* for boat at ({self.row}, {self.col})")
+            #print(f"Running A* for boat at ({self.row}, {self.col})")
             self.path = solve_maze_astar(maze, (self.row, self.col), target) or []
         elif algorithm == "AC3+Backtracking":
-            print(f"Running AC3+Backtracking for boat at ({self.row}, {self.col})")
+           # print(f"Running AC3+Backtracking for boat at ({self.row}, {self.col})")
             absolute_path = backtrack_with_ac3(maze, (self.row, self.col), target)
             if absolute_path:
                 self.path = path_to_directions(absolute_path)  # Chuyển sang hướng tương đối
-                print(f"Converted path: {self.path}")
+              #  print(f"Converted path: {self.path}")
             else:
                 self.path = []
-                print("Backtracking returned no path.")
+                #print("Backtracking returned no path.")
         elif algorithm == "Simulated Annealing":
-            print(f"Running Simulated Annealing for boat at ({self.row}, {self.col})")
+           # print(f"Running Simulated Annealing for boat at ({self.row}, {self.col})")
             self.path = simulated_annealing_path(
                 maze, (self.row, self.col), target, max_iterations=1000, initial_temp=100, cooling_rate=0.99
             )
             if self.path is None:
                 self.path = []
-                print("Simulated Annealing did not find a path.")
-            else:
-                print(f"Path found by Simulated Annealing: {self.path}")
+            #    print("Simulated Annealing did not find a path.")
 
         else:
             self.path = []  # Không tìm thấy đường đi
-        '''elif algorithm == "Simulated Annealing":
-            print(f"Running Simulated Annealing for boat at ({self.row}, {self.col})")
-
-            distance = abs(self.row - target[0]) + abs(self.col - target[1])
-            threshold = 20  # Adjust threshold based on maze size
-
-            if distance <= threshold:
-                search_radius = 10
-                region = [(r, c) for r in range(max(0, target[0] - search_radius), 
-                                                min(len(maze), target[0] + search_radius + 1))
-                                for c in range(max(0, target[1] - search_radius), 
-                                                min(len(maze[0]), target[1] + search_radius + 1))]
-            else:
-                region = None  # Search globally for distant targets
-
-            self.path = simulated_annealing_path(
-                maze, (self.row, self.col), target, 
-                max_iterations=5000, initial_temp=5000, cooling_rate=0.999, region=region
-            )
-
-            if self.path:
-                print(f"Path found by Simulated Annealing: {self.path}")
-            else:
-                print("Simulated Annealing returned no path.")'''
-
+            print(f"No path found using {algorithm}. Boat remains at {self.end_position}.")
 
 
         
@@ -87,7 +64,6 @@ class Boat:
         if not self.path:
             print(f"No path found using {algorithm}. Boat remains at ({self.row}, {self.col}).")
 
-
     def move(self, maze):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_move_time >= self.move_delay:
@@ -95,6 +71,7 @@ class Boat:
                 print("Boat has no path.")
                 return  # Không có đường đi
             if self.path_index < len(self.path):
+
                 direction = self.path[self.path_index]
                 next_row = self.row + direction[0]
                 next_col = self.col + direction[1]
@@ -102,10 +79,19 @@ class Boat:
                     self.row = next_row
                     self.col = next_col
                     self.path_index += 1
-                print(f"Boat moved to ({self.row}, {self.col})")
+                    self.step_count += 1  # Cập nhật số bước
+                    print(f"Boat moved to ({self.row}, {self.col}), Step Count: {self.step_count}")
+                else:
+                    print("Boat cannot move to the next cell.")
             else:
-                print("Boat reached the end of its path.")
+                # Cập nhật vị trí cuối cùng
+                self.end_position = (self.row, self.col)
+                print(f"Boat reached the end of its path at {self.end_position}.")
             self.last_move_time = current_time
+
+
+
+
 
     def draw(self, surface):
         x = self.col * cell_width

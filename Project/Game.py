@@ -11,12 +11,14 @@ from Boat import Boat
 from Key import generate_random_keys
 from UI import create_buttons
 
-def ai_move(auto_move_path, auto_move_index, maze_matrix):
+def ai_move(auto_move_path, auto_move_index, maze_matrix, boat):
+    print("ai_move called")  # Debugging line to check if the function is being called
     if auto_move_path is not None and auto_move_index < len(auto_move_path):
         direction = auto_move_path[auto_move_index]
-        player.move(direction, maze_matrix)  # Assuming player is an instance of Player
+        boat.move(direction, maze_matrix)  # Di chuyển thuyền AI
         return auto_move_index + 1
-    return auto_move_index  
+    return auto_move_index
+
 
 # Hàm reset lại game
 def reset_game():
@@ -63,6 +65,8 @@ start_time = pygame.time.get_ticks()  # Lưu thời gian bắt đầu trò chơi
 ai_active = False  # Biến kiểm tra xem AI có đang hoạt động hay không; False nghĩa là AI chưa hoạt động
 auto_move_delay = 10  # Độ trễ (ms) giữa các bước tự động
 last_move_time = pygame.time.get_ticks()  # Theo dõi thời gian của lần di chuyển cuối cùng
+
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -72,13 +76,13 @@ while True:
             if not game_over:
                 direction = None
                 if event.key == pygame.K_LEFT:
-                    direction = (0, -1)  # Trái
+                    direction = (0, -1)  # Left
                 elif event.key == pygame.K_RIGHT:
-                    direction = (0, 1)   # Phải
+                    direction = (0, 1)   # Right
                 elif event.key == pygame.K_UP:
-                    direction = (-1, 0)  # Lên
+                    direction = (-1, 0)  # Up
                 elif event.key == pygame.K_DOWN:
-                    direction = (1, 0)   # Xuống
+                    direction = (1, 0)   # Down
                 
                 if direction: 
                     player.move(direction, maze_matrix)
@@ -111,8 +115,8 @@ while True:
                 pygame.quit()
                 sys.exit()
 
-    current_time = pygame.time.get_ticks() # Lấy thời gian hiện tại
-    elapsed_time = (current_time - start_time) // 1000 # Thời gian cho ai bắt đầu chạy
+    current_time = pygame.time.get_ticks() # Get the current time
+    elapsed_time = (current_time - start_time) // 1000 # Time elapsed since the game started
 
     if elapsed_time >= 5 and algorithm_selected and not game_over:
         ai_active = True
@@ -120,7 +124,8 @@ while True:
         boat.move(maze_matrix)
 
         if player.is_at_goal():
-            #pygame.time.delay(3000)
+            # Game over logic\ưp
+            
             if collected_keys == num_keys:
                 game_over = True
                 player_won = True
@@ -128,12 +133,13 @@ while True:
                 game_over = True
                 player_won = False
 
-        # Kiểm tra nếu thuyền bắt được người chơi
+        # Check if the boat catches the player
         if (boat.row, boat.col) == (player.row, player.col):
             game_over = True
             player_won = False
             game_completed = True
- 
+
+
     for key in keys:
         if not key.collected and player.row == key.row and player.col == key.col:
             key.collected = True
@@ -162,14 +168,18 @@ while True:
     draw_rounded_button(buttons["backtracking"], "Backtracking", Colors.DARK_BLUE, 36)
 
     keys_textbox_rect = pygame.Rect(screen_width - 400, 60, 300, 50)
-    pygame.draw.rect(screen, Colors.WHITE, keys_textbox_rect, 3)  # Vẽ viền
-    pygame.draw.rect(screen, Colors.PINK, keys_textbox_rect.inflate(-3*2, -3*2))  # Vẽ nền (3: độ dày của viền)
+    pygame.draw.rect(screen, Colors.WHITE, keys_textbox_rect, 3)  # Draw border
+    pygame.draw.rect(screen, Colors.PINK, keys_textbox_rect.inflate(-3*2, -3*2))  # Draw background
 
     keys_text = font.render(f"Keys: {collected_keys}/{num_keys}", True, Colors.WHITE)
-    keys_text_rect = keys_text.get_rect(center=keys_textbox_rect.center)  # Canh giữa văn bản trong textbox
+    keys_text_rect = keys_text.get_rect(center=keys_textbox_rect.center)  # Center the text
     screen.blit(keys_text, keys_text_rect)
 
     if game_over:
+
+        print(f"AI (Boat) Total Steps: {boat.step_count}")
+        print(f"Boat AI started at {boat.start_position} and ended at {boat.end_position}.")
+
         if player_won:
             screen.blit(win_image, (screen_width // 2 - win_image.get_width() // 2,
                                     screen_height // 2 - win_image.get_height() // 2))

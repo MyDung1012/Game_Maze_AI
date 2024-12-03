@@ -7,7 +7,7 @@ pygame.init()
 # Thiết lập màn hình
 info = pygame.display.Info()
 screen_width, screen_height = info.current_w, info.current_h
-screen = pygame.display.set_mode((screen_width, screen_height), pygame.FULLSCREEN)
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 
 # mở ma trận
 with open('difficulty.txt', 'r') as f:
