@@ -79,29 +79,20 @@ class Boat:
                     self.row = next_row
                     self.col = next_col
                     self.path_index += 1
-<<<<<<< HEAD
-            
-                print(f"Boat moved to ({self.row}, {self.col})")
-=======
                     self.step_count += 1  # Cập nhật số bước
                     print(f"Boat moved to ({self.row}, {self.col}), Step Count: {self.step_count}")
                 else:
                     print("Boat cannot move to the next cell.")
->>>>>>> cb0f2cb112ef04e746b6fd819be043a15a225e89
             else:
                 # Cập nhật vị trí cuối cùng
                 self.end_position = (self.row, self.col)
                 print(f"Boat reached the end of its path at {self.end_position}.")
             self.last_move_time = current_time
-<<<<<<< HEAD
-        print(len(self.path))
-=======
 
 
 
 
 
->>>>>>> cb0f2cb112ef04e746b6fd819be043a15a225e89
     def draw(self, surface):
         x = self.col * cell_width
         y = self.row * cell_height
