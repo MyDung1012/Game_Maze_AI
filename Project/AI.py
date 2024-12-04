@@ -2,6 +2,7 @@ import pygame
 from collections import deque
 import heapq
 import random
+import time
 import math
 import numpy as np
 
@@ -124,14 +125,12 @@ def solve_maze_astar(maze, start, goal):
     return None
 
 
-#### BACKTRACKING + AC3
+# Backtracking + AC3
 def min_consistent_ac3(grid):
-    """
-    Xây dựng danh sách các nước đi hợp lệ từ mỗi ô trong mê cung.
-    """
     rows, cols = len(grid), len(grid[0])
     directions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Các hướng di chuyển: lên, xuống, trái, phải
 
+    # Khởi tạo danh sách các nước đi hợp lệ
     possible_moves = {(r, c): [] for r in range(rows) for c in range(cols) if grid[r][c] != 1}
 
     for r in range(rows):
@@ -142,23 +141,22 @@ def min_consistent_ac3(grid):
                     if 0 <= nr < rows and 0 <= nc < cols and grid[nr][nc] != 1:
                         possible_moves[(r, c)].append((nr, nc))
 
+    # Áp dụng AC3 để loại bỏ các nước đi không hợp lệ
     queue = list(possible_moves.keys())
     while queue:
         current = queue.pop(0)
-        updated = False
         neighbors = possible_moves[current]
-
-        if not neighbors:
-            del possible_moves[current]
-            updated = True
 
         for neighbor in neighbors:
             if neighbor in possible_moves and current not in possible_moves[neighbor]:
                 possible_moves[neighbor].remove(current)
-                updated = True
-
-            if updated:
                 queue.append(neighbor)
+
+
+        if not neighbors:  # No valid moves
+            print("Boat is stuck.")
+            break
+
 
     return possible_moves
 
@@ -169,57 +167,78 @@ def heuristic(a, b):
     """
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-def calculate_max_depth(maze, complexity='medium'):
-    size = len(maze) * len(maze[0])  # Tổng số ô
-    wall_density = sum(row.count(1) for row in maze) / size  # Mật độ tường
-    
-    # Hệ số điều chỉnh dựa trên độ phức tạp
-    if complexity == 'simple':
-        factor = 0.3
-    elif complexity == 'medium':
-        factor = 0.5
-    elif complexity == 'complex':
-        factor = 0.7
-    
-    # Điều chỉnh dựa trên mật độ tường
-    if wall_density > 0.5:
-        factor += 0.1  # Tăng nếu mật độ tường cao
-    
-    max_depth = int(factor * size)
-    return max_depth
 
-def backtrack_with_ac3(grid, ghost_position, pacman_position):
+def calculate_max_depth(maze, complexity='medium'):
+    """
+    Tính toán độ sâu tối đa dựa trên kích thước mê cung và độ phức tạp.
+    """
+    size = len(maze) * len(maze[0])
+    wall_density = sum(row.count(1) for row in maze) / size
+
+    # Hệ số điều chỉnh dựa trên độ phức tạp
+    factor = {
+        'simple': 0.3,
+        'medium': 0.5,
+        'complex': 0.7
+    }.get(complexity, 0.5)
+
+    if wall_density > 0.5:  # Điều chỉnh nếu mật độ tường cao
+        factor += 0.1
+
+    return int(factor * size)
+
+
+def backtrack_with_ac3(grid, boat_position, player_position, time_limit=2):
+    """
+    Thuật toán backtracking với AC3 và giới hạn thời gian.
+    """
     max_depth = calculate_max_depth(grid, complexity='medium')
-    print (max_depth)
     possible_moves = min_consistent_ac3(grid)
+    memo = {}  # Bộ nhớ đệm cho các trạng thái đã duyệt
+    start_time = time.time()  # Thời gian bắt đầu
 
     def search(path, depth):
-        if depth > max_depth:  # Giới hạn độ sâu
+        """
+        Hàm tìm kiếm đệ quy.
+        """
+        # Kiểm tra giới hạn thời gian
+        if time.time() - start_time > time_limit:
             return None
+
+        # Kiểm tra giới hạn độ sâu
+        if depth > max_depth:
+            return None
+
         current = path[-1]
-        if current == pacman_position:  # Đạt được Pacman
+        # Nếu đạt đến Pacman
+        if current == player_position:
             return path
 
-        # Sử dụng hàng đợi ưu tiên để tìm nước đi tốt nhất dựa trên heuristic
+        # Kiểm tra nếu trạng thái đã được duyệt
+        if current in memo:
+            return memo[current]
+
+        # Tìm nước đi tốt nhất dựa trên heuristic
         pq = []
         for next_pos in possible_moves.get(current, []):
-            if next_pos not in path:
-                # Ưu tiên bước đi gần người chơi hơn
-                priority = heuristic(next_pos, pacman_position)
+            if next_pos not in path:  # Tránh đi qua ô đã duyệt
+                priority = heuristic(next_pos, player_position)
                 heapq.heappush(pq, (priority, next_pos))
 
-        # Duyệt qua các bước đi trong hàng đợi ưu tiên
         while pq:
             _, next_pos = heapq.heappop(pq)
             result = search(path + [next_pos], depth + 1)
-            if result:
+            if result:  # Nếu tìm thấy đường đi hợp lệ
+                memo[current] = result
                 return result
 
+        # Lưu trạng thái không tìm thấy đường đi
+        memo[current] = None
         return None
+    # Bắt đầu tìm kiếm từ vị trí của "ghost"
+    result_path = search([boat_position], 0)
 
-    result_path = search([ghost_position], 0)
-
-    # Kiểm tra tính hợp lệ của đường đi
+    # Kiểm tra đường đi hợp lệ
     if result_path:
         for step in result_path:
             r, c = step
@@ -227,6 +246,7 @@ def backtrack_with_ac3(grid, ghost_position, pacman_position):
                 print(f"Invalid step in path: {step}")
                 return None
     return result_path
+
 
 # SIMULATED ANNEALING
 def schedule(t, k=20, lam=0.005, limit=1000):
@@ -280,8 +300,5 @@ def simulated_annealing_path(maze, start, goal, max_iterations=1000, initial_tem
     return path if current == goal else None
 
 def heuristic(a, b):
-    """
-    Manhattan distance heuristic for the maze game.
-    """
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
