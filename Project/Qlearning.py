@@ -1,200 +1,193 @@
+import numpy as np
 import pygame
-import sys
-from Config import screen, screen_width, screen_height, background_image, font
-from Player import Player
+import pickle
+import os
+from collections import deque
 import json
-from UI import create_buttons, draw_rounded_button
-from Planets import planets
-from Colors import Colors
+import time
 
-
-maze_size = 30
-with open(f"Maze/30.txt", 'r') as f:
-    maze_matrix = json.load(f)
-maze_width = screen_width * 2 // 3
-cell_width = maze_width // len(maze_matrix[0])
-cell_height = screen_height // len(maze_matrix)
-
-path_image = pygame.image.load("Image/blockk.png")
-path_image = pygame.transform.scale(path_image, (cell_width, cell_height))
-
-def __init__(self, matrix):
-        self.matrix = matrix
-
+pygame.init()
+info = pygame.display.Info()
+screen_width, screen_height = info.current_w, info.current_h
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 class Maze:
-    def __init__(self, matrix):
-        self.matrix = matrix
+    def __init__(self, maze, start_position, goal_position):
+        self.maze = maze
+        self.maze_height = maze.shape[0]
+        self.maze_width = maze.shape[1]
+        self.start_position = start_position    
+        self.goal_position = goal_position
+class QLearningAgent:
+    def __init__(self, maze, learning_rate=0.1, discount_factor=0.9, exploration_start=1.0, exploration_end=0.01, num_episodes=100):
+        self.q_table = np.zeros((maze.maze_height, maze.maze_width, 4))
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.exploration_start = exploration_start
+        self.exploration_end = exploration_end
+        self.num_episodes = num_episodes
+    def get_exploration_rate(self, current_episode):
+        return max(self.exploration_end, self.exploration_start * (self.exploration_end / self.exploration_start) ** (current_episode / self.num_episodes))
+    def get_action(self, state, current_episode):
+        exploration_rate = self.get_exploration_rate(current_episode)
+        if np.random.rand() < exploration_rate:
+            return np.random.randint(4)
+        else:
+            return np.argmax(self.q_table[state])
+    def update_q_table(self, state, action, next_state, reward):
+        best_next_action = np.argmax(self.q_table[next_state])
+        self.q_table[state][action] += self.learning_rate * (
+            reward + self.discount_factor * self.q_table[next_state][best_next_action] - self.q_table[state][action]
+        )
+    # Lưu bảng Q vào file
+    def save_q_table(self, file_path):
+        if os.path.exists(file_path):  # Nếu file tồn tại
+            with open(file_path, 'rb') as file:
+                old_q_table = pickle.load(file)  # Tải Q-table cũ
+            # Cộng dồn giá trị từ Q-table mới
+            self.q_table = np.maximum(self.q_table, old_q_table)  # Chọn giá trị lớn nhất từ hai bảng
+        # Lưu lại Q-table đã kết hợp
+        with open(file_path, 'wb') as file:
+            pickle.dump(self.q_table, file)
+        print(f"Q-table updated and saved to {file_path}")
+    # Tải bảng Q từ file
+    def load_q_table(self, file_path):
+        with open(file_path, 'rb') as file:
+            self.q_table = pickle.load(file)
+        print(f"Q-table loaded from {file_path}")
+def finish_episode(agent, maze, current_episode, train=True, visualize=False):
+    cell_size = 25  # Kích thước mỗi ô (đã phóng to)
+    current_state = maze.start_position
+    is_done = False
+    episode_reward = 0
+    path = [current_state]
+    steps = 0  # Biến để lưu số bước
 
-    def draw(self, surface):
-        for row in range(len(self.matrix)):
-            for col in range(len(self.matrix[row])):
-                x, y = col * cell_width, row * cell_height
-                if self.matrix[row][col] == 1:
-                    surface.blit(path_image, (x, y))
-                    self.draw_wall_border(surface, row, col)
+    if visualize:
+        pygame.init()
+        screen = pygame.display.set_mode((maze.maze_width * cell_size + 300, maze.maze_height * cell_size))  # Thêm không gian cho bộ đếm
+        pygame.display.set_caption(f"TRAINING EPISODES - Current Episode: {current_episode + 1}")
+        clock = pygame.time.Clock()
+        background_image = pygame.image.load('Image/bgbg.jpg')  # Tải hình ảnh nền
+        background_image = pygame.transform.scale(background_image, (maze.maze_width * cell_size, maze.maze_height * cell_size))  # Thay đổi kích thước
+        side_background = pygame.image.load('Image/bl.png')  # Tải hình ảnh nền bên phải
+        side_background = pygame.transform.scale(side_background, (300, maze.maze_height * cell_size))  # Thay đổi kích thước
+        ddt_image = pygame.image.load('Image/by ddt.png')  # Tải hình ảnh "by DDT"
+        ddt_image = pygame.transform.scale(ddt_image, (270, 200))  # Thay đổi kích thước hình ảnh nếu cần
+        font = pygame.font.Font(None, 36)  # Khởi tạo font
 
-        self.draw_stylized_border(surface)
+    while not is_done:
+        action = agent.get_action(current_state, current_episode)
+        next_state = (current_state[0] + actions[action][0], current_state[1] + actions[action][1])
+        if (
+            next_state[0] < 0 or next_state[0] >= maze.maze_height or
+            next_state[1] < 0 or next_state[1] >= maze.maze_width or
+            maze.maze[next_state[0]][next_state[1]] == 1
+        ):
+            reward = -10
+            next_state = current_state
+        elif next_state == maze.goal_position:
+            path.append(next_state)
+            reward = 100
+            is_done = True
+        else:
+            path.append(next_state)
+            reward = -1
+        episode_reward += reward
+        steps += 1  # Tăng số bước
+        if train:
+            agent.update_q_table(current_state, action, next_state, reward)
+        current_state = next_state
 
-    def draw_wall_border(self, surface, row, col):
-        x, y = col * cell_width, row * cell_height
-        outer_border_color = Colors.PURPLE_2
-        inner_border_color = Colors.LIGHT_YELLOW
-
-        adjacent = [
-            ((x, y), (x + cell_width, y), row > 0 and self.matrix[row - 1][col] == 0),          
-            ((x, y + cell_height), (x + cell_width, y + cell_height), row < len(self.matrix) - 1 and self.matrix[row + 1][col] == 0),  # Cạnh dưới
-            ((x, y), (x, y + cell_height), col > 0 and self.matrix[row][col - 1] == 0),        
-            ((x + cell_width, y), (x + cell_width, y + cell_height), col < len(self.matrix[0]) - 1 and self.matrix[row][col + 1] == 0)  # Cạnh phải
-    ]
-
-        for start, end, condition in adjacent:
-            if condition:
-                pygame.draw.line(surface, outer_border_color, (start[0] - 1, start[1] - 1), (end[0] - 1, end[1] - 1), 3)
-                pygame.draw.line(surface, inner_border_color, start, end, 2)
-
-    def draw_stylized_border(self, surface):
-        maze_width = len(self.matrix[0]) * cell_width
-        maze_height = len(self.matrix) * cell_height
-        corner_size = 10 
-
-        layers = [
-            ((Colors.PURPLE_2), 6),  
-            ((Colors.LIGHT_YELLOW), 3)  
-        ]
-
-        for i, (color, thickness) in enumerate(layers):
-            offset = i * 1 
-            pygame.draw.rect(surface, color, (offset, offset, maze_width - 1 * offset, maze_height - 1 * offset), thickness, border_radius=corner_size)
-
-class Player:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.original_image = pygame.image.load('Image/rocket.png')
-        self.original_image = pygame.transform.scale(self.original_image, (cell_width, cell_height))
-        self.image = self.original_image
-        self.reset_position()
-        self.game_completed = False 
-        #self.image = pygame.transform.scale(player_image, (cell_width, cell_height))
-
-    def reset_position(self):
-        self.row = 0
-        self.col = 0
-        self.game_completed = False 
-        self.image = self.original_image
-    
-    def is_at_goal(self):
-        return self.row == maze_size - 1 and self.col == maze_size - 1 
-    
-    def move(self, direction, maze_matrix):
-        if self.is_at_goal():
-            return False
-            
-        new_row = self.row + direction[0]
-        new_col = self.col + direction[1]
-        
-        if (0 <= new_row < len(maze_matrix) and 
-            0 <= new_col < len(maze_matrix[0]) and 
-            maze_matrix[new_row][new_col] == 0):
-            
-            if direction == (-1, 0):  # lên
-                self.image = pygame.transform.rotate(self.original_image, 0)
-            elif direction == (1, 0):  # xuống
-                self.image = pygame.transform.rotate(self.original_image, 180)
-            elif direction == (0, -1):  # trái
-                self.image = pygame.transform.rotate(self.original_image, 90)
-            elif direction == (0, 1):  # Phải
-                self.image = pygame.transform.rotate(self.original_image, -90)
-            self.row = new_row
-            self.col = new_col
-
-            return True
-        return False
-    
-    def draw(self, surface):
-        x = self.col * cell_width
-        y = self.row * cell_height
-        surface.blit(self.image, (x + (cell_width - self.image.get_width()) // 2, 
-                                  y + (cell_height - self.image.get_height()) // 2))
-
-goal_image = pygame.image.load("Image/moon.png")
-goal_image = pygame.transform.scale(goal_image, (cell_width, cell_height))
-goal_rect = goal_image.get_rect()
-# Khởi tạo các đối tượng
-maze = Maze(maze_matrix)
-player = Player(0, 0)  # Vị trí ban đầu của Player
-goal_position = (29, 29)  # Đích đến ở góc dưới bên phải
-
-# Hàm vẽ đích đến
-def draw_goal(surface, position):
-    goal_x = position[1] * cell_width
-    goal_y = position[0] * cell_height
-    surface.blit(goal_image, (goal_x, goal_y))
-
-buttons = create_buttons(screen_width, screen_height)
-
-# Vòng lặp chính
-def main():
-    pygame.init()
-    clock = pygame.time.Clock()
-    running = True
-
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.KEYDOWN:
-                direction = None
-                if event.key == pygame.K_UP:
-                    direction = (-1, 0)
-                elif event.key == pygame.K_DOWN:
-                    direction = (1, 0)
-                elif event.key == pygame.K_LEFT:
-                    direction = (0, -1)
-                elif event.key == pygame.K_RIGHT:
-                    direction = (0, 1)
-
-                if direction:
-                    player.move(direction, maze_matrix)
-
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if buttons["game"].collidepoint(event.pos):
-                    print("Game button clicked")
-                    exec(open("Game.py", encoding="utf-8").read())
-                elif buttons["exit"].collidepoint(event.pos):
-                    print("Exit button clicked")
+        if visualize:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
+                    return episode_reward, len(path), path
 
-        # Kiểm tra nếu player đến đích
-        if player.row == goal_position[0] and player.col == goal_position[1]:
-            print("You reached the goal!")
-            running = False
+            screen.blit(background_image, (0, 0))  # Vẽ hình ảnh nền chính
+            for y in range(maze.maze_height):
+                for x in range(maze.maze_width):
+                    if maze.maze[y][x] == 1:  # Nếu là ô tường
+                        wall_image = pygame.image.load('Image/blockk.png')  # Tải hình ảnh tường
+                        wall_image = pygame.transform.scale(wall_image, (cell_size, cell_size))  # Thay đổi kích thước
+                        screen.blit(wall_image, (x * cell_size, y * cell_size))  # Vẽ hình ảnh tường
 
-        # Vẽ màn hình
-        screen.blit(background_image, (0, 0))
+            key_image = pygame.image.load('Image/key.png')  # Tải hình ảnh điểm bắt đầu
+            key_image = pygame.transform.scale(key_image, (cell_size, cell_size))  # Thay đổi kích thước
+            screen.blit(key_image, (maze.start_position[1] * cell_size, maze.start_position[0] * cell_size))  # Vẽ hình ảnh điểm bắt đầu
+            moon_image = pygame.image.load('Image/moon.png')  # Tải hình ảnh đích
+            moon_image = pygame.transform.scale(moon_image, (cell_size, cell_size))  # Thay đổi kích thước
+            screen.blit(moon_image, (maze.goal_position[1] * cell_size, maze.goal_position[0] * cell_size))  # Vẽ hình ảnh đích
+            rocket_image = pygame.image.load('Image/ufo.png')  # Tải hình ảnh rocket
+            rocket_image = pygame.transform.scale(rocket_image, (cell_size, cell_size))  # Thay đổi kích thước
+            screen.blit(rocket_image, (current_state[1] * cell_size, current_state[0] * cell_size))  # Vẽ hình ảnh rocket
 
-        reward = pygame.Rect(screen_width - 400, 60, 300, 50)
-        pygame.draw.rect(screen, Colors.WHITE, reward, 3)  # Vẽ viền
-        pygame.draw.rect(screen, Colors.PINK, reward.inflate(-3*2, -3*2)) 
+            # Vẽ nền bên phải cho số bước và phần thưởng
+            screen.blit(side_background, (maze.maze_width * cell_size, 0))  # Vẽ nền bên phải
 
-        keys_text = font.render(f"Reward", True, Colors.WHITE)
-        keys_text_rect = keys_text.get_rect(center=reward.center)  # Canh giữa văn bản trong textbox
-        screen.blit(keys_text, keys_text_rect)
+            # Hiển thị số episode, số bước và phần thưởng
+            episode_text = font.render(f'Episode: {current_episode + 1}', True, (255, 255, 255))  # Màu trắng
+            steps_text = font.render(f'Steps: {steps}', True, (255, 255, 255))  # Màu trắng
+            reward_text = font.render(f'Reward: {episode_reward}', True, (255, 255, 255))  # Màu trắng
+            screen.blit(episode_text, (maze.maze_width * cell_size + 10, 10))  # Vị trí hiển thị số episode
+            screen.blit(steps_text, (maze.maze_width * cell_size + 10, 50))  # Vị trí hiển thị số bước
+            screen.blit(reward_text, (maze.maze_width * cell_size + 10, 90))  # Vị trí hiển thị phần thưởng
 
-        draw_rounded_button(buttons["exit"], "Exit", Colors.DARK_BLUE, 36)
-        draw_rounded_button(buttons["game"], "GAME", Colors.DARK_BLUE, 36)
-        draw_rounded_button(buttons["start"], "START", Colors.DARK_BLUE, 36)
-        draw_rounded_button(buttons["stop"], "STOP", Colors.DARK_BLUE, 36)
-        for planet in planets:
-            planet.update()
-            planet.draw(screen)
-        maze.draw(screen)
-        draw_goal(screen, goal_position)
-        player.draw(screen)
-        pygame.display.flip()
-        clock.tick(60)
+            # Vẽ hình ảnh "by DDT" ở góc dưới bên phải
+            screen.blit(ddt_image, (maze.maze_width * cell_size + 10, maze.maze_height * cell_size - 250))  # Vị trí góc dưới bên phải
 
-if __name__ == "__main__":
-    main()
+            pygame.display.flip()
+
+
+    if visualize:
+        pygame.time.delay(1000)  # Tạm dừng trong 1000 ms (1 giây)
+        pygame.quit()
+    return episode_reward, len(path), path
+# Huấn luyện tác nhân với trực quan hóa từng episode
+def continue_training(agent, maze, load_path="q_table_updated_1.pkl", save_path="q_table_updated_1.pkl", additional_episodes=100, visualize_interval=20):
+    global episode
+    # Tải bảng Q từ file nếu có
+    if os.path.exists(load_path):
+        agent.load_q_table(load_path)
+    else:
+        print(f"No Q-table found at {load_path}, starting fresh.")
+
+    # Huấn luyện thêm các episode
+    for episode in range(additional_episodes):
+        visualize = (episode % visualize_interval == 0)
+        reward, steps, _ = finish_episode(agent, maze, current_episode=episode, train=True, visualize=visualize)
+        print(f"Episode {episode+1}/{additional_episodes}: Reward = {reward}, Steps = {steps}")
+    
+    # Lưu lại bảng Q sau khi huấn luyện
+    agent.save_q_table(save_path)
+
+
+# Kiểm tra tác nhân
+def test_agent(agent, maze, load_path="q_table_updated_1.pkl", visualize=True):
+    # Tải bảng Q từ file
+    if os.path.exists(load_path):
+        agent.load_q_table(load_path)
+    else:
+        print(f"No Q-table found at {load_path}, testing on a fresh agent.")
+
+    # Kiểm tra tác nhân với bảng Q hiện tại
+    reward, steps, path = finish_episode(agent, maze, current_episode=200, train=False, visualize=visualize)
+    print("Path:", path)
+    print("Total reward:", reward)
+    print("Steps:", steps)
+
+
+with open(f"Maze/30.txt", 'r') as f:
+    maze_layout = np.array(json.load(f))
+
+start = (0, 0)
+goal = (29, 29)
+# Initialize maze and agent
+maze = Maze(maze_layout, start, goal)
+agent = QLearningAgent(maze)
+# Define possible actions (up, down, left, right)
+actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
+agent = QLearningAgent(maze)
+continue_training(agent, maze, load_path="q_table_updated_1.pkl", save_path="q_table_updated_1.pkl", additional_episodes=100)
+print("solve with RL")
+test_agent(agent, maze, load_path="q_table_updated_1.pkl", visualize=True)

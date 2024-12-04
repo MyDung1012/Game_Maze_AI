@@ -2,6 +2,14 @@ import numpy as np
 import pygame
 import pickle
 import os
+from collections import deque
+import json
+import time
+
+pygame.init()
+info = pygame.display.Info()
+screen_width, screen_height = info.current_w, info.current_h
+screen = pygame.display.set_mode((screen_width, screen_height), pygame.RESIZABLE)
 class Maze:
     def __init__(self, maze, start_position, goal_position):
         self.maze = maze
@@ -47,7 +55,7 @@ class QLearningAgent:
             self.q_table = pickle.load(file)
         print(f"Q-table loaded from {file_path}")
 def finish_episode(agent, maze, current_episode, train=True, visualize=False):
-    cell_size = 20  # Kích thước mỗi ô
+    cell_size = 30  # Kích thước mỗi ô (đã phóng to)
     current_state = maze.start_position
     is_done = False
     episode_reward = 0
@@ -57,6 +65,8 @@ def finish_episode(agent, maze, current_episode, train=True, visualize=False):
         screen = pygame.display.set_mode((maze.maze_width * cell_size, maze.maze_height * cell_size))
         pygame.display.set_caption(f"TRAINING EPISODES - Current Episode: {current_episode + 1}")
         clock = pygame.time.Clock()
+        background_image = pygame.image.load('Image/bgbg.jpg')  # Tải hình ảnh nền
+        background_image = pygame.transform.scale(background_image, (maze.maze_width * cell_size, maze.maze_height * cell_size))  # Thay đổi kích thước
     while not is_done:
         action = agent.get_action(current_state, current_episode)
         next_state = (current_state[0] + actions[action][0], current_state[1] + actions[action][1])
@@ -84,24 +94,36 @@ def finish_episode(agent, maze, current_episode, train=True, visualize=False):
                     pygame.quit()
                     return episode_reward, len(path), path
 
-            screen.fill((255, 255, 255))
+            screen.blit(background_image, (0, 0))  # Vẽ hình ảnh nền
             for y in range(maze.maze_height):
                 for x in range(maze.maze_width):
-                    color = (0, 0, 0) if maze.maze[y][x] == 1 else (255, 255, 255)
-                    pygame.draw.rect(screen, color, (x * cell_size, y * cell_size, cell_size, cell_size))
-            for pos in path:
-                pygame.draw.rect(screen, (0, 0, 255), (pos[1] * cell_size, pos[0] * cell_size, cell_size, cell_size))
-            pygame.draw.rect(screen, (255, 0, 0), (maze.start_position[1] * cell_size, maze.start_position[0] * cell_size, cell_size, cell_size))
-            pygame.draw.rect(screen, (0, 255, 0), (maze.goal_position[1] * cell_size, maze.goal_position[0] * cell_size, cell_size, cell_size))
-            pygame.draw.rect(screen, (0, 255, 0), (current_state[1] * cell_size, current_state[0] * cell_size, cell_size, cell_size))
+                    if maze.maze[y][x] == 1:  # Nếu là ô tường
+                        wall_image = pygame.image.load('Image/blockk.png')  # Tải hình ảnh tường
+                        wall_image = pygame.transform.scale(wall_image, (cell_size, cell_size))  # Thay đổi kích thước
+                        screen.blit(wall_image, (x * cell_size, y * cell_size))  # Vẽ hình ảnh tường
+            #for pos in path:
+                #block_image = pygame.image.load('Image/blockk.png')  # Tải hình ảnh ô đi qua
+                #block_image = pygame.transform.scale(block_image, (cell_size, cell_size))  # Thay đổi kích thước
+                #screen.blit(block_image, (x * cell_size, y * cell_size))  # Vẽ hình ảnh ô đi qua
+            
+            key_image = pygame.image.load('Image/key.png')  # Tải hình ảnh điểm bắt đầu
+            key_image = pygame.transform.scale(key_image, (cell_size, cell_size))  # Thay đổi kích thước
+            screen.blit(key_image, (maze.start_position[1] * cell_size, maze.start_position[0] * cell_size))  # Vẽ hình ảnh điểm bắt đầu
+            moon_image = pygame.image.load('Image/moon.png')  # Tải hình ảnh đích
+            moon_image = pygame.transform.scale(moon_image, (cell_size, cell_size))  # Thay đổi kích thước
+            screen.blit(moon_image, (maze.goal_position[1] * cell_size, maze.goal_position[0] * cell_size))  # Vẽ hình ảnh đích
+            rocket_image = pygame.image.load('Image/ufo.png')  # Tải hình ảnh rocket
+            rocket_image = pygame.transform.scale(rocket_image, (cell_size, cell_size))  # Thay đổi kích thước
+            screen.blit(rocket_image, (current_state[1] * cell_size, current_state[0] * cell_size))  # Vẽ hình ảnh rocket
             pygame.display.flip()
             if current_episode == 0:
-                clock.tick(5000)
+                clock.tick(200)
             elif current_episode <=20:
                 clock.tick(100)
             else:
                 clock.tick(10)
     if visualize:
+        pygame.time.delay(1000)  # Tạm dừng trong 1000 ms (1 giây)
         pygame.quit()
     return episode_reward, len(path), path
 # Huấn luyện tác nhân với trực quan hóa từng episode
@@ -125,7 +147,6 @@ def continue_training(agent, maze, load_path="q_table_updated_1.pkl", save_path=
 
 # Kiểm tra tác nhân
 def test_agent(agent, maze, load_path="q_table_updated_1.pkl", visualize=True):
-    import os
     # Tải bảng Q từ file
     if os.path.exists(load_path):
         agent.load_q_table(load_path)
@@ -137,39 +158,11 @@ def test_agent(agent, maze, load_path="q_table_updated_1.pkl", visualize=True):
     print("Path:", path)
     print("Total reward:", reward)
     print("Steps:", steps)
-# Define maze layout
-maze_layout = np.array([
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0],
-[1,1,1,1,1,0,1,0,0,1,1,0,0,1,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0],
-[0,1,1,0,1,1,1,0,0,1,1,0,1,1,1,0,0,1,0,1,1,1,0,0,0,1,1,0,0,0],
-[0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,1,1,0,0,0,0,0,0,1,1,1,0,0],
-[0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0],
-[0,0,1,1,0,0,0,1,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,1,0,0,0,0,0,0],
-[0,0,1,0,1,1,0,1,1,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,1,0],
-[0,0,1,0,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,0,0,1,0],
-[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,1,0,0,0,1,1,1,1,1,0,0,0,0],
-[0,0,0,0,0,1,0,0,0,0,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,1,1,1,1],
-[1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0],
-[0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1,1,0,0,0,0,1,0],
-[0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,1,1,1,0,0,0,1,0],
-[0,1,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,1,0,0,1,0],
-[0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,1,1,0,0,0,1,0,0,0,1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0],
-[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,0],
-[0,0,0,0,0,0,1,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0],
-[1,1,1,1,0,0,1,0,0,0,0,1,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0],
-[1,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,1,0,0],
-[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0,0,1],
-[0,0,0,1,0,0,0,1,1,1,1,1,0,0,1,1,0,1,1,0,0,1,1,1,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,1,0,0,1,0,0,0,0,0,0,0,0],
-[1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,0,0,1,1,0,0,0],
-[0,0,1,1,0,0,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,1,0,0,0,1,1,0,1,1],
-[1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,1,0,0,1,0,0,0,0,0,0,1,0,0,0,1],
-[1,0,0,1,0,0,0,0,1,1,1,1,1,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-])
+
+
+with open(f"Maze/30.txt", 'r') as f:
+    maze_layout = np.array(json.load(f))
+
 start = (0, 0)
 goal = (29, 29)
 # Initialize maze and agent
@@ -179,5 +172,7 @@ agent = QLearningAgent(maze)
 actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]  # Up, Down, Left, Right
 agent = QLearningAgent(maze)
 continue_training(agent, maze, load_path="q_table_updated_1.pkl", save_path="q_table_updated_1.pkl", additional_episodes=100)
+
+print("solve with RL")
 
 test_agent(agent, maze, load_path="q_table_updated_1.pkl", visualize=True)

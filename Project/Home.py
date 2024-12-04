@@ -133,23 +133,29 @@ def draw_instruction_popup(current_page):
         ],
         [
             "HƯỚNG DẪN DI CHUYỂN",
-            "8 - Di chuyển lên trên",
-            "2 - Di chuyển xuống dưới",
-            "4 - Di chuyển qua trái",
-            "6 - Di chuyển qua phải",
-            "7 - Di chuyển lên xéo bên trái",
-            "9 - Di chuyển lên xéo bên phải",
-            "1 - Di chuyển xuống xéo trái",
-            "3 - Di chuyển xuống xéo phải",
+            "MŨI TÊN LÊN - Di chuyển lên trên",
+            "MŨI TÊN XUỐNG - Di chuyển xuống dưới",
+            "MŨI TÊN TRÁI - Di chuyển qua trái",
+            "MŨI TÊN PHẢI - Di chuyển qua phải",
         ],
         [
             "QUY TẮC TRÒ CHƠI",
             "",
-            "Khi bạn đã hoàn thành trò chơi. Hãy nhấn lựa chọn một thuật toán AI bất kỳ. Bạn sẽ thắng nếu số bước đi của bạn ít hơn số bước đi của AI",
+            "Bạn cần chọn một thuật toán sau đó tìm cách di chuyển để nhặt hết chìa khóa và đi đến đích không để bị bắt ",
             "",
             "",
             "CHƠI VUI!",
-        ]
+        ],
+        [
+            "NHÓM THỰC HIỆN",
+            "",
+            "",
+            "",
+            "ĐẶNG CỬU DƯƠNG - 22110124",
+            "LÊ THỊ MỸ DUNG - 22110117",
+            "NGUYỄN PHẠM NHẬT TRÂN - 22110250",
+
+        ],
     ]
 
     centered_lines = [
@@ -157,6 +163,10 @@ def draw_instruction_popup(current_page):
         "HƯỚNG DẪN DI CHUYỂN",
         "QUY TẮC TRÒ CHƠI",
         "CHƠI VUI!",
+        "NHÓM THỰC HIỆN",
+        "ĐẶNG CỬU DƯƠNG - 22110124",
+        "LÊ THỊ MỸ DUNG - 22110117",
+        "NGUYỄN PHẠM NHẬT TRÂN - 22110250",
     ]
 
     # Hiển thị văn bản của trang hiện tại
@@ -251,7 +261,7 @@ while True:
             popup_x, popup_y, popup_width, popup_height = draw_instruction_popup(current_page)
                 
                 # Nếu nhấn vào nút "Next >", chuyển sang trang tiếp theo
-            if current_page < 2:  # Kiểm tra nếu chưa phải trang cuối
+            if current_page < 3:  # Kiểm tra nếu chưa phải trang cuối
                 if popup_x + popup_width - 100 <= mouse_x <= popup_x + popup_width - 20 and popup_y + popup_height - 60 <= mouse_y <= popup_y + popup_height - 20:
                         current_page += 1  # Chuyển sang trang tiếp theo
             else:  # Trang cuối cùng, nút CLOSE

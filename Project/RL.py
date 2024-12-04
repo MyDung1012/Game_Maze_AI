@@ -11,7 +11,7 @@ class Maze:
         self.start_position = start_position    
         self.goal_position = goal_position
 class QLearningAgent:
-    def __init__(self, maze, learning_rate=0.1, discount_factor=0.9, exploration_start=1.0, exploration_end=0.01, num_episodes=100):
+    def __init__(self, maze, learning_rate=0.1, discount_factor=0.9, exploration_start=1.0, exploration_end=0.01, num_episodes=100): #discount_factor đưa ra tầm nhìn cho các bài toán 
         self.q_table = np.zeros((maze.maze_height, maze.maze_width, 4))
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
@@ -19,7 +19,7 @@ class QLearningAgent:
         self.exploration_end = exploration_end
         self.num_episodes = num_episodes
     def get_exploration_rate(self, current_episode):
-        return max(self.exploration_end, self.exploration_start * (self.exploration_end / self.exploration_start) ** (current_episode / self.num_episodes))
+        return max(self.exploration_end, self.exploration_start * (self.exploration_end / self.exploration_start) ** (current_episode / self.num_episodes)) #giảm dần theo episode
     def get_action(self, state, current_episode):
         exploration_rate = self.get_exploration_rate(current_episode)
         if np.random.rand() < exploration_rate:

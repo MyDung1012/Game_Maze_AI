@@ -102,11 +102,12 @@ class Boat:
                     self.row = next_row
                     self.col = next_col
                     self.path_index += 1
+            
                 print(f"Boat moved to ({self.row}, {self.col})")
             else:
                 print("Boat reached the end of its path.")
             self.last_move_time = current_time
-
+        print(len(self.path))
     def draw(self, surface):
         x = self.col * cell_width
         y = self.row * cell_height

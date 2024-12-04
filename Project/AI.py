@@ -15,17 +15,17 @@ directions = [
 # Hàm thuật toán bfs
 def solve_maze_bfs(maze, start, goal):
 
-    rows = len(maze)
-    cols = len(maze[0])
+    rows = len(maze)      #xác định số hàng
+    cols = len(maze[0])   #xác định cột
     
-    queue = deque([(start)])
-    visited = {start}
+    queue = deque([(start)]) #tạo chỗ xếp hàng
+    visited = {start} #đánh dấu ô 
     
     # Dictionary lưu đường đi
-    came_from = {}
+    came_from = {} 
     
-    while queue:
-        current = queue.popleft()
+    while queue: #
+        current = queue.popleft() #lấy phần tử đầu tiên
         
         if current == goal:
             # Tái tạo đường đi
@@ -41,7 +41,7 @@ def solve_maze_bfs(maze, start, goal):
         for dx, dy in directions:
             next_row = current[0] + dx
             next_col = current[1] + dy
-            neighbor = (next_row, next_col)
+            neighbor = (next_row, next_col) 
             
             # Kiểm tra điều kiện hợp lệ
             if (0 <= next_row < rows and 
@@ -57,61 +57,72 @@ def solve_maze_bfs(maze, start, goal):
 
 # Hàm thuật toán A*
 def heuristic(p1, p2):
-    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])    #f(n)=g(n)+h(n)
 def solve_maze_astar(maze, start, goal):
 
-    
     rows = len(maze)
     cols = len(maze[0])
     
-    # Tập đóng và tập mở
+    # Tập đóng (closed_set): Lưu các điểm đã xử lý.
     closed_set = set()
+
+    # Tập mở (open_set): Hàng đợi ưu tiên, lưu các điểm cần xử lý tiếp theo.
+    # Sử dụng heapq để đảm bảo các phần tử có giá trị f nhỏ nhất được xử lý trước.
     open_set = []
-    heapq.heappush(open_set, (0, start))
+    heapq.heappush(open_set, (0, start))  # Thêm điểm bắt đầu với giá trị f = 0.
     
-    # Lưu đường đi
+    # Dictionary lưu "cha" của mỗi điểm, phục vụ cho việc tái tạo đường đi.
     came_from = {}
     
-    # g_score[n] là chi phí từ start đến node n
+    # g_score lưu chi phí từ điểm bắt đầu đến mỗi điểm.
     g_score = {start: 0}
-    
+
+    # Lặp cho đến khi không còn điểm nào trong tập mở
     while open_set:
+        # Lấy điểm có giá trị f nhỏ nhất từ open_set
         current = heapq.heappop(open_set)[1]
         
+        # Nếu đã đến đích, tái tạo và trả về đường đi
         if current == goal:
-            # Tái tạo đường đi
-            path = []
+            path = []  # Danh sách lưu các bước di chuyển
             while current in came_from:
-                prev = came_from[current]
-                path.append((current[0] - prev[0], current[1] - prev[1]))
-                current = prev
-            path.reverse()
-            return path
-            
+                prev = came_from[current]  # Lấy điểm cha của current
+                path.append((current[0] - prev[0], current[1] - prev[1]))  # Lưu hướng di chuyển
+                current = prev  # Quay về điểm cha
+            path.reverse()  # Đảo ngược danh sách để có đường đi từ start đến goal
+            return path  # Trả về danh sách các bước di chuyển
+        
+        # Thêm điểm hiện tại vào tập đóng
         closed_set.add(current)
         
-        # Kiểm tra tất cả các hướng có thể đi
-        for dx, dy in directions:
-            neighbor = (current[0] + dx, current[1] + dy)
+        # Kiểm tra các điểm lân cận
+        for dx, dy in directions:  # directions chứa các vector di chuyển hợp lệ (vd: [(0,1), (1,0), (0,-1), (-1,0)])
+            neighbor = (current[0] + dx, current[1] + dy)  # Tính tọa độ của điểm lân cận
             
-            # Ki���m tra điều kiện hợp lệ
-            if (neighbor[0] < 0 or neighbor[0] >= rows or 
-                neighbor[1] < 0 or neighbor[1] >= cols or
-                maze[neighbor[0]][neighbor[1]] == 1 or  # 1 là tường
-                neighbor in closed_set):
+            # Kiểm tra điều kiện hợp lệ của điểm lân cận
+            if (neighbor[0] < 0 or neighbor[0] >= rows or  # Nằm ngoài lưới (hàng)
+                neighbor[1] < 0 or neighbor[1] >= cols or  # Nằm ngoài lưới (cột)
+                maze[neighbor[0]][neighbor[1]] == 1 or     # Là tường (giá trị 1 trong maze)
+                neighbor in closed_set):                  # Đã được xử lý trước đó
                 continue
-                
+            
+            # Tính toán chi phí tạm thời từ start đến neighbor qua current
             tentative_g_score = g_score[current] + 1
             
-            if (neighbor not in g_score or 
-                tentative_g_score < g_score[neighbor]):
+            # Nếu neighbor chưa được thăm hoặc tìm thấy đường đi tốt hơn
+            if (neighbor not in g_score or tentative_g_score < g_score[neighbor]):
+                came_from[neighbor] = current  # Cập nhật cha của neighbor
+                g_score[neighbor] = tentative_g_score  # Cập nhật g_score của neighbor
                 
-                came_from[neighbor] = current
-                g_score[neighbor] = tentative_g_score
+                # Tính giá trị f = g + h (h là giá trị heuristic từ neighbor đến goal)
                 f_score = tentative_g_score + heuristic(neighbor, goal)
+                
+                # Thêm neighbor vào tập mở
                 heapq.heappush(open_set, (f_score, neighbor))
     
-    return None  # Không tìm thấy đường đi
+    # Nếu không tìm thấy đường đi
+    return None
+
 
 #### BACKTRACKING + AC3
 def min_consistent_ac3(grid):
