@@ -210,7 +210,6 @@ def backtrack_with_ac3(grid, boat_position, player_position, time_limit=2):
             return None
 
         current = path[-1]
-        # Nếu đạt đến Pacman
         if current == player_position:
             return path
 
@@ -235,7 +234,6 @@ def backtrack_with_ac3(grid, boat_position, player_position, time_limit=2):
         # Lưu trạng thái không tìm thấy đường đi
         memo[current] = None
         return None
-    # Bắt đầu tìm kiếm từ vị trí của "ghost"
     result_path = search([boat_position], 0)
 
     # Kiểm tra đường đi hợp lệ
