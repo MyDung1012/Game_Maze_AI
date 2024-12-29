@@ -1,4 +1,6 @@
 A mini project to sovle maze with some AI algorithm
+MADE BY
+Đặng Cửu Dương - Lê Thị Mỹ Dung - Nguyễn Phạm Nhật Trân
 1. CATCHING MODE:
 You will choose any of the following 4 algorithms (BFS, A Start, Simulated Analing, Backtracking with AC3), then move with the arrow buttons with the task of finding the key and reaching the destination without being caught by the alien bot
 
